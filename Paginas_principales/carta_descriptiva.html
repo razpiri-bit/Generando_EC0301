@@ -1,1 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta Descriptiva EC0301 - Documento Maestro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="ec0301-data-manager.js"></script>
+    <style>
+        :root {
+            --primary: #1E3A8A; --accent: #FF6B35; --success: #22C55E; --warning: #F59E0B;
+            --light: #F8FAFC; --border: #E5E7EB; --text: #1F2937; --muted: #6B7280;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; color: var(--text);
+        }
+        .header {
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            padding: 1rem 0; box-shadow: 0 4px 20px rgba(0,0,0,.1);
+            border-bottom: 3px solid var(--primary); position: sticky; top: 0; z-index: 1000;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+        .header-content {
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+        }
+        h1 { font-size: 1.75rem; color: var(--primary); display: flex; align-items: center; gap: 0.75rem; }
+        .progress-bar {
+            background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 1rem;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, var(--accent), var(--success)); height: 100%;
+            width: 0%; transition: width 0.5s ease; border-radius: 4px;
+        }
+        .toolbar {
+            display: flex; gap: 0.5rem; flex-wrap: wrap;
+        }
+        .btn {
+            padding: 0.6rem 1.2rem; border: none; border-radius: 8px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; display: inline-flex;
+            align-items: center; gap: 0.5rem; text-decoration: none;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
 
+        .section {
+            background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 2rem; margin: 2rem 0; animation: slideUp 0.5s ease;
+        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .section-title {
+            color: var(--primary); font-size: 1.5rem; margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem; border-bottom: 3px solid var(--accent);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary); }
+        input, textarea, select {
+            width: 100%; padding: 0.875rem; border: 2px solid var(--border); border-radius: 10px;
+            font-size: 0.95rem; transition: all 0.3s ease; background: white;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none; border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+        textarea { min-height: 120px; resize: vertical; font-family: inherit; }
+
+        .dynamic-list { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+        .list-item {
+            border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
+            background: var(--light); position: relative;
+        }
+        .remove-btn {
+            position: absolute; top: 0.5rem; right: 0.5rem; background: var(--accent);
+            color: white; border: none; border-radius: 50%; width: 30px; height: 30px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        .module-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;
+        }
+        .module-card {
+            background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            text-align: center; transition: transform 0.3s ease;
+        }
+        .module-card:hover { transform: translateY(-5px); }
+        .module-card.disabled { opacity: 0.6; pointer-events: none; }
+        .module-icon { font-size: 3rem; color: var(--accent); margin-bottom: 1rem; }
+        .module-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 1rem; }
+        .module-description { color: var(--muted); margin-bottom: 1.5rem; }
+        .module-status {
+            display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem;
+        }
+        .status-pending { background: #FEF3C7; color: #92400E; }
+        .status-ready { background: #D1FAE5; color: #166534; }
+        .status-generated { background: #DBEAFE; color: #1E40AF; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1><i class="fa-solid fa-clipboard-list"></i> Carta Descriptiva EC0301</h1>
+                <div class="toolbar">
+                    <button class="btn btn-ai" onclick="generateWithAI()">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Asistente IA
+                    </button>
+                    <button class="btn btn-secondary" onclick="saveDraft()">
+                        <i class="fa-solid fa-save"></i> Guardar
+                    </button>
+                    <button class="btn btn-success" onclick="completeDocument()" id="completeBtn" disabled>
+                        <i class="fa-solid fa-check-circle"></i> Completar
+                    </button>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- INFORMACIÓN GENERAL -->
+        <div class="section">
+            <div class="section-title">
+                <span><i class="fa-solid fa-info-circle"></i> Información General</span>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <label for="nombre">Nombre del Curso*</label>
+                    <input type="text" id="nombre" placeholder="Ej: Diseño de Cursos de Capacitación Presencial" oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="facilitador">Facilitador*</label>
+                    <input type="text" id="facilitador" placeholder="Nombre completo del instructor" oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="lugar">Lugar de Impartición*</label>
+                    <input type="text" id="lugar" placeholder="Dirección o ubicación" oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="duracion">Duración (horas)*</label>
+                    <input type="number" id="duracion" placeholder="20" min="1" max="200" oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="num">Número de Participantes*</label>
+                    <input type="number" id="num" placeholder="15" min="1" max="50" oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="fechas">Fechas de Impartición</label>
+                    <input type="text" id="fechas" placeholder="Del 15 al 19 de Enero 2024">
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem;">
+                <label for="psico">Perfil del Participante*</label>
+                <textarea id="psico" placeholder="Describe el perfil psicopedagógico del participante..." oninput="updateProgress()"></textarea>
+            </div>
+        </div>
+
+        <!-- OBJETIVO GENERAL -->
+        <div class="section">
+            <div class="section-title">
+                <span><i class="fa-solid fa-bullseye"></i> Objetivo General</span>
+                <button class="btn btn-ai" onclick="generateObjetivos()">
+                    <i class="fa-solid fa-robot"></i> Generar IA
+                </button>
+            </div>
+            <div class="grid-3">
+                <div>
+                    <label for="og_accion">Acción (Verbo)*</label>
+                    <input type="text" id="og_accion" placeholder="Diseñar, elaborar, aplicar..." oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="og_condicion">Condición de Operación*</label>
+                    <input type="text" id="og_condicion" placeholder="Con base en metodología..." oninput="updateProgress()">
+                </div>
+                <div>
+                    <label for="og_criterio">Criterio de Evaluación*</label>
+                    <input type="text" id="og_criterio" placeholder="Cumpliendo estándares..." oninput="updateProgress()">
+                </div>
+            </div>
+        </div>
+
+        <!-- OBJETIVOS PARTICULARES -->
+        <div class="section">
+            <div class="section-title">
+                <span><i class="fa-solid fa-list"></i> Objetivos Particulares</span>
+                <button class="btn btn-secondary" onclick="addObjetivo()">
+                    <i class="fa-solid fa-plus"></i> Agregar
+                </button>
+            </div>
+            <div id="objetivos-container" class="dynamic-list">
+                <p style="text-align: center; color: var(--muted); padding: 2rem;">
+                    Haz clic en "Agregar" para incluir objetivos particulares
+                </p>
+            </div>
+        </div>
+
+        <!-- TEMARIO -->
+        <div class="section">
+            <div class="section-title">
+                <span><i class="fa-solid fa-book"></i> Temario de Desarrollo</span>
+                <button class="btn btn-secondary" onclick="addTema()">
+                    <i class="fa-solid fa-plus"></i> Agregar Tema
+                </button>
+            </div>
+            <div id="temas-container" class="dynamic-list">
+                <p style="text-align: center; color: var(--muted); padding: 2rem;">
+                    Haz clic en "Agregar Tema" para estructurar el contenido
+                </p>
+            </div>
+        </div>
+
+        <!-- REQUERIMIENTOS -->
+        <div class="section">
+            <div class="section-title">
+                <span><i class="fa-solid fa-tools"></i> Requerimientos</span>
+            </div>
+            <div class="grid-3">
+                <div>
+                    <label for="rq_inst">Instalaciones*</label>
+                    <textarea id="rq_inst" placeholder="Aula con capacidad para 20 personas..." oninput="updateProgress()"></textarea>
+                </div>
+                <div>
+                    <label for="rq_equipo">Equipo y Mobiliario*</label>
+                    <textarea id="rq_equipo" placeholder="Proyector, laptop, pizarrón..." oninput="updateProgress()"></textarea>
+                </div>
+                <div>
+                    <label for="rq_materiales">Materiales*</label>
+                    <textarea id="rq_materiales" placeholder="Hojas, plumas, folders..." oninput="updateProgress()"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- SISTEMA DE EVALUACIÓN -->
+        <div class="section">
+            <div class="section-title">
+                <span><i class="fa-solid fa-chart-bar"></i> Sistema de Evaluación</span>
+            </div>
+            <div class="grid-2">
+                <div>
+                    <label for="ev_form_pct">Evaluación Formativa (%)*</label>
+                    <input type="number" id="ev_form_pct" value="40" min="0" max="100" oninput="recalcEvaluacion()">
+                </div>
+                <div>
+                    <label for="ev_sum_pct">Evaluación Sumativa (%)*</label>
+                    <input type="number" id="ev_sum_pct" value="60" min="0" max="100" oninput="recalcEvaluacion()">
+                </div>
+                <div>
+                    <label for="ev_form_inst">Instrumento Formativo</label>
+                    <input type="text" id="ev_form_inst" value="Guía de Observación">
+                </div>
+                <div>
+                    <label for="ev_sum_inst">Instrumento Sumativo</label>
+                    <input type="text" id="ev_sum_inst" value="Examen Final">
+                </div>
+                <div>
+                    <label for="ev_min">Calificación Mínima Aprobatoria*</label>
+                    <input type="number" id="ev_min" value="80" min="60" max="90" oninput="updateProgress()">
+                </div>
+                <div>
+                    <label>Total de Evaluación</label>
+                    <input type="text" id="ev_total" value="100%" readonly style="background: var(--light);">
+                </div>
+            </div>
+        </div>
+
+        <!-- MÓDULOS SIGUIENTES -->
+        <div class="section" id="modulosSection" style="display: none;">
+            <div class="section-title">
+                <span><i class="fa-solid fa-layer-group"></i> Módulos del Sistema</span>
+            </div>
+            <div class="module-grid">
+                <div class="module-card" id="logisticaCard" onclick="goToModule('logistica')">
+                    <div class="module-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                    <div class="module-title">Logística</div>
+                    <div class="module-status status-ready">Listo</div>
+                    <div class="module-description">Lista de asistencia, contrato de aprendizaje y requerimientos</div>
+                    <button class="btn btn-primary">Ir al Módulo</button>
+                </div>
+
+                <div class="module-card disabled" id="evaluacionesCard" onclick="goToModule('evaluaciones')">
+                    <div class="module-icon"><i class="fa-solid fa-file-signature"></i></div>
+                    <div class="module-title">Evaluaciones</div>
+                    <div class="module-status status-pending">Pendiente</div>
+                    <div class="module-description">Instrumentos diagnósticos, formativos, sumativos y de satisfacción</div>
+                    <button class="btn btn-primary">Generar con IA</button>
+                </div>
+
+                <div class="module-card disabled" id="manualesCard" onclick="goToModule('manuales')">
+                    <div class="module-icon"><i class="fa-solid fa-book-open"></i></div>
+                    <div class="module-title">Manuales</div>
+                    <div class="module-status status-pending">Pendiente</div>
+                    <div class="module-description">Manual del participante e instructor</div>
+                    <button class="btn btn-primary">Generar con IA</button>
+                </div>
+
+                <div class="module-card disabled" id="auditoriaCard" onclick="goToModule('auditoria')">
+                    <div class="module-icon"><i class="fa-solid fa-shield-check"></i></div>
+                    <div class="module-title">Auditoría</div>
+                    <div class="module-status status-pending">Pendiente</div>
+                    <div class="module-description">Auditoría de cumplimiento y portafolio ZIP</div>
+                    <button class="btn btn-primary">Auditar</button>
+                </div>
+
+                <div class="module-card disabled" id="resultadosCard" onclick="goToModule('resultados')">
+                    <div class="module-icon"><i class="fa-solid fa-file-excel"></i></div>
+                    <div class="module-title">Resultados</div>
+                    <div class="module-status status-pending">Pendiente</div>
+                    <div class="module-description">Captura de calificaciones y reporte final</div>
+                    <button class="btn btn-primary">Capturar</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let objetivoCounter = 0;
+        let temaCounter = 0;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            updateProgress();
+        });
+
+        // Guardar datos automáticamente
+        function saveData() {
+            const data = {
+                nombre: document.getElementById('nombre').value,
+                facilitador: document.getElementById('facilitador').value,
+                lugar: document.getElementById('lugar').value,
+                duracion: document.getElementById('duracion').value,
+                num: document.getElementById('num').value,
+                fechas: document.getElementById('fechas').value,
+                psico: document.getElementById('psico').value,
+                og: {
+                    accion: document.getElementById('og_accion').value,
+                    cond: document.getElementById('og_condicion').value,
+                    criterio: document.getElementById('og_criterio').value
+                },
+                objetivos: getObjetivos(),
+                temas: getTemas(),
+                rq: {
+                    inst: document.getElementById('rq_inst').value,
+                    equipo: document.getElementById('rq_equipo').value,
+                    mats: document.getElementById('rq_materiales').value
+                },
+                ev: {
+                    form: { pct: document.getElementById('ev_form_pct').value, inst: document.getElementById('ev_form_inst').value },
+                    sum: { pct: document.getElementById('ev_sum_pct').value + '%', inst: document.getElementById('ev_sum_inst').value },
+                    min: document.getElementById('ev_min').value
+                }
+            };
+
+            EC0301Manager.saveData(data, 'carta_descriptiva');
+            return data;
+        }
+
+        function loadData() {
+            const data = EC0301Manager.getData();
+            if (!data || !data.nombre) return;
+
+            document.getElementById('nombre').value = data.nombre || '';
+            document.getElementById('facilitador').value = data.facilitador || '';
+            document.getElementById('lugar').value = data.lugar || '';
+            document.getElementById('duracion').value = data.duracion || '';
+            document.getElementById('num').value = data.num || '';
+            document.getElementById('fechas').value = data.fechas || '';
+            document.getElementById('psico').value = data.psico || '';
+            
+            if (data.og) {
+                document.getElementById('og_accion').value = data.og.accion || '';
+                document.getElementById('og_condicion').value = data.og.cond || '';
+                document.getElementById('og_criterio').value = data.og.criterio || '';
+            }
+
+            if (data.rq) {
+                document.getElementById('rq_inst').value = data.rq.inst || '';
+                document.getElementById('rq_equipo').value = data.rq.equipo || '';
+                document.getElementById('rq_materiales').value = data.rq.mats || '';
+            }
+
+            if (data.ev) {
+                document.getElementById('ev_form_pct').value = data.ev.form?.pct || '40';
+                document.getElementById('ev_sum_pct').value = data.ev.sum?.pct?.replace('%', '') || '60';
+                document.getElementById('ev_form_inst').value = data.ev.form?.inst || 'Guía de Observación';
+                document.getElementById('ev_sum_inst').value = data.ev.sum?.inst || 'Examen Final';
+                document.getElementById('ev_min').value = data.ev.min || '80';
+            }
+
+            // Cargar objetivos y temas
+            loadObjetivos(data.objetivos || []);
+            loadTemas(data.temas || []);
+        }
+
+        function saveDraft() {
+            try {
+                saveData();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Guardado',
+                    text: 'Los datos se han guardado correctamente',
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        function updateProgress() {
+            const requiredFields = [
+                'nombre', 'facilitador', 'lugar', 'duracion', 'num', 'psico',
+                'og_accion', 'og_condicion', 'og_criterio',
+                'rq_inst', 'rq_equipo', 'rq_materiales', 'ev_min'
+            ];
+            
+            let completed = 0;
+            requiredFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (element && element.value.trim()) completed++;
+            });
+
+            // Verificar que tenga al menos un objetivo y un tema
+            const objetivos = getObjetivos();
+            const temas = getTemas();
+            if (objetivos.length > 0) completed += 2;
+            if (temas.length > 0) completed += 2;
+
+            const progress = Math.round((completed / (requiredFields.length + 4)) * 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+
+            // Habilitar botón de completar si está al 90% o más
+            const completeBtn = document.getElementById('completeBtn');
+            if (progress >= 90) {
+                completeBtn.disabled = false;
+                completeBtn.textContent = 'Completar Carta Descriptiva';
+            } else {
+                completeBtn.disabled = true;
+                completeBtn.textContent = `Completar (${progress}%)`;
+            }
+
+            return progress;
+        }
+
+        function recalcEvaluacion() {
+            const form = parseInt(document.getElementById('ev_form_pct').value) || 0;
+            const sum = parseInt(document.getElementById('ev_sum_pct').value) || 0;
+            const total = form + sum;
+            
+            document.getElementById('ev_total').value = total + '%';
+            
+            if (total !== 100) {
+                document.getElementById('ev_total').style.color = 'red';
+            } else {
+                document.getElementById('ev_total').style.color = 'green';
+            }
+        }
+
+        function addObjetivo() {
+            objetivoCounter++;
+            const container = document.getElementById('objetivos-container');
+            if (container.children.length === 1 && container.children[0].tagName === 'P') {
+                container.innerHTML = '';
+            }
+
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `
+                <button class="remove-btn" onclick="removeElement(this.parentElement)">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+                <div class="grid-2">
+                    <div>
+                        <label>Dominio</label>
+                        <select name="obj_dominio">
+                            <option value="cognitivo">Cognitivo</option>
+                            <option value="psicomotriz">Psicomotriz</option>
+                            <option value="afectivo">Afectivo</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Acción (Verbo de Bloom)</label>
+                        <input type="text" name="obj_accion" placeholder="Identificar, aplicar, analizar...">
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <label>Condición y Criterio</label>
+                    <textarea name="obj_descripcion" placeholder="Descripción completa del objetivo particular..."></textarea>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function addTema() {
+            temaCounter++;
+            const container = document.getElementById('temas-container');
+            if (container.children.length === 1 && container.children[0].tagName === 'P') {
+                container.innerHTML = '';
+            }
+
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `
+                <button class="remove-btn" onclick="removeElement(this.parentElement)">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+                <div class="grid-2">
+                    <div>
+                        <label>Nombre del Tema</label>
+                        <input type="text" name="tema_nombre" placeholder="Ej: Fundamentos del diseño instruccional">
+                    </div>
+                    <div>
+                        <label>Duración (minutos)</label>
+                        <input type="number" name="tema_duracion" placeholder="60" min="15" max="480">
+                    </div>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <label>Descripción del Contenido</label>
+                    <textarea name="tema_contenido" placeholder="Breve descripción del contenido a desarrollar..."></textarea>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeElement(element) {
+            element.remove();
+            updateProgress();
+        }
+
+        function getObjetivos() {
+            const objetivos = [];
+            document.querySelectorAll('#objetivos-container .list-item').forEach(item => {
+                objetivos.push({
+                    dominio: item.querySelector('[name="obj_dominio"]').value,
+                    accion: item.querySelector('[name="obj_accion"]').value,
+                    descripcion: item.querySelector('[name="obj_descripcion"]').value
+                });
+            });
+            return objetivos;
+        }
+
+        function getTemas() {
+            const temas = [];
+            document.querySelectorAll('#temas-container .list-item').forEach(item => {
+                temas.push({
+                    nombre: item.querySelector('[name="tema_nombre"]').value,
+                    duracion: item.querySelector('[name="tema_duracion"]').value,
+                    contenido: item.querySelector('[name="tema_contenido"]').value
+                });
+            });
+            return temas;
+        }
+
+        function loadObjetivos(objetivos) {
+            const container = document.getElementById('objetivos-container');
+            container.innerHTML = '';
+            
+            objetivos.forEach(obj => {
+                addObjetivo();
+                const lastItem = container.lastElementChild;
+                lastItem.querySelector('[name="obj_dominio"]').value = obj.dominio || 'cognitivo';
+                lastItem.querySelector('[name="obj_accion"]').value = obj.accion || '';
+                lastItem.querySelector('[name="obj_descripcion"]').value = obj.descripcion || '';
+            });
+
+            if (objetivos.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 2rem;">Haz clic en "Agregar" para incluir objetivos particulares</p>';
+            }
+        }
+
+        function loadTemas(temas) {
+            const container = document.getElementById('temas-container');
+            container.innerHTML = '';
+            
+            temas.forEach(tema => {
+                addTema();
+                const lastItem = container.lastElementChild;
+                lastItem.querySelector('[name="tema_nombre"]').value = tema.nombre || '';
+                lastItem.querySelector('[name="tema_duracion"]').value = tema.duracion || '';
+                lastItem.querySelector('[name="tema_contenido"]').value = tema.contenido || '';
+            });
+
+            if (temas.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 2rem;">Haz clic en "Agregar Tema" para estructurar el contenido</p>';
+            }
+        }
+
+        function generateWithAI() {
+            Swal.fire({
+                title: 'Asistente de IA',
+                html: `
+                    <div style="text-align: left;">
+                        <h4>¿Qué deseas generar?</h4>
+                        <div style="margin: 1rem 0;">
+                            <label><input type="radio" name="aiOption" value="objetivos"> Objetivo General y Particulares</label><br>
+                            <label><input type="radio" name="aiOption" value="temario"> Temario basado en objetivos</label><br>
+                            <label><input type="radio" name="aiOption" value="requerimientos"> Requerimientos técnicos</label><br>
+                            <label><input type="radio" name="aiOption" value="todo"> Completar documento automáticamente</label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Generar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const selected = document.querySelector('input[name="aiOption"]:checked');
+                    if (!selected) {
+                        Swal.showValidationMessage('Selecciona una opción');
+                        return false;
+                    }
+                    return selected.value;
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    generateContent(result.value);
+                }
+            });
+        }
+
+        function generateContent(type) {
+            Swal.fire({
+                title: 'Generando contenido con IA...',
+                text: 'Por favor espera mientras procesamos tu solicitud',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // Simular generación de IA
+            setTimeout(() => {
+                switch(type) {
+                    case 'objetivos':
+                        generateObjetivos();
+                        break;
+                    case 'temario':
+                        generateTemario();
+                        break;
+                    case 'requerimientos':
+                        generateRequerimientos();
+                        break;
+                    case 'todo':
+                        generateAll();
+                        break;
+                }
+            }, 2000);
+        }
+
+        function generateObjetivos() {
+            const curso = document.getElementById('nombre').value;
+            if (!curso) {
+                Swal.fire('Error', 'Primero define el nombre del curso', 'error');
+                return;
+            }
+
+            // Simulación de generación por IA
+            document.getElementById('og_accion').value = 'Diseñar';
+            document.getElementById('og_condicion').value = 'con base en metodología sistémica y andragógica';
+            document.getElementById('og_criterio').value = 'cumpliendo con estándares de calidad EC0301';
+
+            Swal.fire('Generado', 'Objetivo general creado con IA. Revisa y ajusta según necesidades.', 'success');
+        }
+
+        function generateTemario() {
+            // Lógica similar para temario
+            Swal.fire('En desarrollo', 'Esta funcionalidad se completará en la siguiente versión', 'info');
+        }
+
+        function generateRequerimientos() {
+            document.getElementById('rq_inst').value = 'Aula con capacidad para ' + (document.getElementById('num').value || '20') + ' personas, iluminación adecuada, ventilación';
+            document.getElementById('rq_equipo').value = 'Proyector, laptop, pizarrón, mesas y sillas';
+            document.getElementById('rq_materiales').value = 'Hojas blancas, plumas, folders, marcadores';
+            
+            Swal.fire('Generado', 'Requerimientos básicos generados. Personaliza según necesidades específicas.', 'success');
+        }
+
+        function generateAll() {
+            generateObjetivos();
+            generateRequerimientos();
+            Swal.fire('Parcialmente generado', 'Se han completado algunos campos. Continúa personalizando el contenido.', 'info');
+        }
+
+        function completeDocument() {
+            const progress = updateProgress();
+            if (progress < 90) {
+                Swal.fire('Documento incompleto', 'Completa al menos 90% de los campos requeridos', 'warning');
+                return;
+            }
+
+            Swal.fire({
+                title: '¿Completar Carta Descriptiva?',
+                text: 'Esto activará los módulos siguientes. ¿Continuar?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, completar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    saveData();
+                    activateModules();
+                    Swal.fire('Completado', 'Carta descriptiva completada. Los módulos están ahora disponibles.', 'success');
+                }
+            });
+        }
+
+        function activateModules() {
+            document.getElementById('modulosSection').style.display = 'block';
+            
+            // Activar módulos progresivamente
+            setTimeout(() => {
+                document.getElementById('logisticaCard').classList.remove('disabled');
+                document.getElementById('logisticaCard').querySelector('.module-status').textContent = 'Listo';
+                document.getElementById('logisticaCard').querySelector('.module-status').className = 'module-status status-ready';
+            }, 500);
+
+            setTimeout(() => {
+                document.getElementById('evaluacionesCard').classList.remove('disabled');
+                document.getElementById('evaluacionesCard').querySelector('.module-status').textContent = 'Listo';
+                document.getElementById('evaluacionesCard').querySelector('.module-status').className = 'module-status status-ready';
+            }, 1000);
+
+            setTimeout(() => {
+                document.getElementById('manualesCard').classList.remove('disabled');
+                document.getElementById('manualesCard').querySelector('.module-status').textContent = 'Listo';
+                document.getElementById('manualesCard').querySelector('.module-status').className = 'module-status status-ready';
+            }, 1500);
+
+            setTimeout(() => {
+                document.getElementById('auditoriaCard').classList.remove('disabled');
+                document.getElementById('auditoriaCard').querySelector('.module-status').textContent = 'Listo';
+                document.getElementById('auditoriaCard').querySelector('.module-status').className = 'module-status status-ready';
+            }, 2000);
+
+            setTimeout(() => {
+                document.getElementById('resultadosCard').classList.remove('disabled');
+                document.getElementById('resultadosCard').querySelector('.module-status').textContent = 'Listo';
+                document.getElementById('resultadosCard').querySelector('.module-status').className = 'module-status status-ready';
+            }, 2500);
+
+            // Scroll suave hacia los módulos
+            document.getElementById('modulosSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function goToModule(moduleName) {
+            // Guardar datos antes de cambiar de módulo
+            saveData();
+            
+            // Redirigir al módulo correspondiente
+            window.location.href = `${moduleName}.html`;
+        }
+
+        // Auto-guardado cada 30 segundos
+        setInterval(() => {
+            if (document.getElementById('nombre').value) {
+                saveData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
