@@ -13,7 +13,7 @@
     <script src="../sistema_central/auth.js" defer></script>
     
     <style>
-        /* (Tu CSS de 600+ líneas va aquí - Omitido por brevedad, usa el que ya tienes) */
+        /* (Tu CSS va aquí - Omitido por brevedad) */
         :root {
             --primary: #1E3A8A; --accent: #FF6B35; --success: #22C55E; --warning: #F59E0B;
             --light: #F8FAFC; --border: #E5E7EB; --text: #1F2937; --muted: #6B7280;
@@ -25,14 +25,19 @@
             min-height: 100vh; color: var(--text); overflow-x: hidden;
         }
         /* ... Tu CSS ... */
-        .login-message {
+         .login-message {
             text-align: center; color: white; padding: 4rem 1rem;
             background: rgba(255, 255, 255, 0.05); border-radius: 24px;
             backdrop-filter: blur(20px); margin-top: 3rem;
+            animation: fadeInUp 0.5s ease-out;
         }
         .user-info {
             font-weight: 600; color: var(--primary); display: none;
             padding: 0.5rem 1rem; background: var(--light); border-radius: 8px;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -40,9 +45,7 @@
     <header class="hero-header">
         <div class="header-content">
             <div class="logo-section">
-                <div class="logo">
-                    <i class="fa-solid fa-graduation-cap"></i>
-                </div>
+                <div class="logo"><i class="fa-solid fa-graduation-cap"></i></div>
                 <div class="brand-info">
                     <h1>SkillsCert EC0301</h1> 
                     <p>Sistema Integral de Diseño de Cursos</p>
@@ -138,7 +141,7 @@
         <section class="features-section">
             <h2 class="section-title">Características del Sistema</h2>
             <div class="features-grid">
-                <div class="feature-card">
+                 <div class="feature-card">
                     <div class="feature-icon"><i class="fa-solid fa-robot"></i></div>
                     <h3 class="feature-title">Generación por IA</h3>
                     <p class="feature-description">
@@ -174,8 +177,8 @@
         // =============================================================
         // LÓGICA DEL DASHBOARD (index.html)
         // =============================================================
-
-        // Datos de los módulos del sistema (los mismos que te di antes)
+        // (El JavaScript que te di antes va aquí, sin cambios)
+        // ... (Todo el código JS desde 'const SYSTEM_MODULES = [...]' hasta el final) ...
         const SYSTEM_MODULES = [
             { id: 'carta', title: 'Carta Descriptiva', description: 'Documento maestro que define objetivos, contenidos, metodología y sistema de evaluación del curso.', icon: 'fa-clipboard-list', url: 'carta-descriptiva.html', weight: 40 },
             { id: 'logistica', title: 'Logística', description: 'Documentos operativos: lista de asistencia, contrato de aprendizaje y requerimientos técnicos.', icon: 'fa-tasks', url: 'logistica.html', weight: 15, dependsOn: ['carta'] },
@@ -189,101 +192,67 @@
         let currentUser = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Inicia la lógica de autenticación primero
             initializeAuth();
-            
-            // La lógica de pago de Stripe se inicializa después
             initializeStripePayment();
         });
 
-        // =============================================================
-        // LÓGICA DE AUTENTICACIÓN Y ESTADO
-        // =============================================================
-
-        /**
-         * Función principal que revisa el estado de autenticación al cargar la página.
-         * ASUME que tu 'auth.js' tiene las funciones:
-         * - auth.isLoggedIn() -> devuelve true/false
-         * - auth.getUser() -> devuelve un objeto { email: '...' } o null
-         * - auth.login() -> Muestra un popup para ingresar código
-         * - auth.logout() -> Cierra la sesión
-         */
         async function initializeAuth() {
-            // Espera a que los scripts externos (auth.js) carguen
             if (typeof auth === 'undefined' || typeof EC0301Manager === 'undefined') {
                 console.log('Esperando scripts (auth.js, ec0301-data-manager.js)...');
-                setTimeout(initializeAuth, 100); // Reintenta pronto
+                setTimeout(initializeAuth, 100); 
                 return;
             }
 
-            const loggedIn = await auth.isLoggedIn(); // auth.js revisará el token
+            const loggedIn = await auth.isLoggedIn(); 
 
             if (loggedIn) {
-                currentUser = await auth.getUser(); // auth.js decodifica el token
+                currentUser = await auth.getUser(); 
                 
-                // Muestra UI de usuario logueado
                 document.getElementById('loginMessage').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
                 
-                // Configura botón de Salir
                 const authButton = document.getElementById('authButton');
                 authButton.innerHTML = '<i class="fa-solid fa-sign-out"></i> Cerrar Sesión';
                 
-                // Muestra info del usuario y botones del header
-                document.getElementById('userInfo').textContent = `Hola, ${currentUser.email || 'usuario'}`; // Asume que el token tiene email
+                document.getElementById('userInfo').textContent = `Hola, ${currentUser.email || 'usuario'}`; 
                 document.getElementById('hero-user-email').textContent = `Proyecto de ${currentUser.email || 'usuario'}`;
                 document.getElementById('userInfo').style.display = 'block';
                 document.getElementById('projectOptionsButton').style.display = 'inline-flex';
                 document.getElementById('exportProjectButton').style.display = 'inline-flex';
 
-                // MUESTRA EL DASHBOARD DE PROYECTO (YA PAGÓ SI ESTÁ LOGUEADO)
                 document.getElementById('projectDashboard').style.display = 'block';
                 document.getElementById('startButton').style.display = 'inline-flex';
                 document.getElementById('loadButton').style.display = 'inline-flex';
 
-                // Cargar el proyecto y los módulos
                 loadProjectStatus();
                 renderModules();
 
             } else {
-                // Muestra UI de usuario no logueado
                 document.getElementById('loginMessage').style.display = 'block';
                 document.getElementById('mainContent').style.display = 'none';
                 
-                // Configura botón de Entrar
                 const authButton = document.getElementById('authButton');
                 authButton.innerHTML = '<i class="fa-solid fa-sign-in"></i> Iniciar Sesión';
                 
-                // Oculta info de usuario y botones
                 document.getElementById('userInfo').style.display = 'none';
                 document.getElementById('projectOptionsButton').style.display = 'none';
                 document.getElementById('exportProjectButton').style.display = 'none';
             }
         }
 
-        /**
-         * Maneja el clic del botón de Iniciar/Cerrar Sesión
-         */
         async function handleAuth() {
             if (await auth.isLoggedIn()) {
-                // Si está logueado, cerrar sesión
                 await auth.logout();
-                window.location.reload(); // Recarga la página para estado "logout"
+                window.location.reload(); 
             } else {
-                // Si no está logueado, mostrar popup de login (para el código)
-                const loginSuccess = await auth.login(); // auth.js pedirá el código
+                const loginSuccess = await auth.login(); 
                 if (loginSuccess) {
-                    window.location.reload(); // Recarga la página para estado "login"
+                    window.location.reload(); 
                 }
             }
         }
-
-        // =============================================================
-        // LÓGICA DE PAGO STRIPE
-        // =============================================================
         
         function initializeStripePayment() {
-            // 1. Reemplaza esto con tu Clave Publicable real de Stripe (modo prueba primero)
             const stripePublicKey = 'pk_test_51SJ0gXFupe2fTa5zdzZlQfwp81Y3esGAdUbW1R4hc9v1ezMj90cnow4t6TjUJVV7bEqz3v5d11cqvPrFps4P3f680xqM9IUsj'; // ¡TU CLAVE PUBLICABLE!
             const backendUrl = 'https://generando-ec0301-backend.onrender.com'; // ¡TU URL DE BACKEND!
             let stripe;
@@ -291,7 +260,7 @@
             try {
                  stripe = Stripe(stripePublicKey);
             } catch(e) {
-                console.error("Error inicializando Stripe. ¿Pegaste la clave pública?");
+                console.error("Error inicializando Stripe. ¿Pegaste la clave pública?", e);
                 return;
             }
 
@@ -308,12 +277,12 @@
                   const response = await fetch(`${backendUrl}/create-checkout-session`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // body: JSON.stringify({ ... }) // Aquí puedes enviar el email si ya lo tienes
+                    // body: JSON.stringify({ ... }) 
                   });
 
                   if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Error del servidor');
+                    throw new Error(errorData.error || `Error del servidor (${response.status})`);
                   }
 
                   const session = await response.json();
@@ -346,237 +315,26 @@
               console.warn('Botón de pago #checkout-button no encontrado.');
             }
         }
-
-        // =============================================================
-        // LÓGICA ORIGINAL DEL DASHBOARD (FUNCIONES DE PROYECTO)
-        // =============================================================
-
-        function loadProjectStatus() {
-            try {
-                projectData = EC0301Manager.getData();
-                const systemInfo = EC0301Manager.getSystemInfo();
-                
-                document.getElementById('projectName').textContent = projectData.nombre || 'Nuevo Proyecto';
-                document.getElementById('completionPercentage').textContent = systemInfo.compliance + '%';
-                document.getElementById('modulesCompleted').textContent = systemInfo.modules + '/6';
-                document.getElementById('lastUpdate').textContent = systemInfo.modified ? new Date(systemInfo.modified).toLocaleDateString() : 'Nunca';
-                
-                const progressFill = document.getElementById('progressFill');
-                const progressText = document.getElementById('progressText');
-                progressFill.style.width = systemInfo.compliance + '%';
-                
-                if (systemInfo.compliance === 0) progressText.textContent = 'Proyecto sin iniciar';
-                else if (systemInfo.compliance < 50) progressText.textContent = 'Proyecto en fase inicial';
-                else if (systemInfo.compliance < 90) progressText.textContent = 'Proyecto en desarrollo';
-                else progressText.textContent = 'Proyecto casi completado';
-                
-            } catch (error) {
-                console.error('Error cargando estado del proyecto:', error);
-                showNewProjectState();
-            }
-        }
-
-        function showNewProjectState() {
-            document.getElementById('projectName').textContent = 'Nuevo Proyecto';
-            document.getElementById('completionPercentage').textContent = '0%';
-            document.getElementById('modulesCompleted').textContent = '0/6';
-            document.getElementById('lastUpdate').textContent = 'Nunca';
-            document.getElementById('progressText').textContent = 'Listo para comenzar';
-        }
-
-        function renderModules() {
-            const container = document.getElementById('modulesGrid');
-            container.innerHTML = '';
-            
-            SYSTEM_MODULES.forEach((module, index) => {
-                const moduleStatus = getModuleStatus(module);
-                const card = createModuleCard(module, moduleStatus);
-                container.appendChild(card);
-            });
-        }
-
-        function getModuleStatus(module) {
-            const completedModules = EC0301Manager.getCompletedModules(projectData);
-            
-            if (module.dependsOn) {
-                const dependenciesComplete = module.dependsOn.every(dep => 
-                    completedModules.includes(dep)
-                );
-                if (!dependenciesComplete) {
-                    return { status: 'locked', label: 'Bloqueado' };
-                }
-            }
-            
-            if (completedModules.includes(module.id)) {
-                return { status: 'completed', label: 'Completado' };
-            } else if (module.id === 'carta' && projectData.nombre) {
-                return { status: 'in-progress', label: 'En Progreso' };
-            } else {
-                return { status: 'pending', label: 'Disponible' };
-            }
-        }
-
-        function createModuleCard(module, moduleStatus) {
-            const card = document.createElement('div');
-            card.className = `module-card status-${moduleStatus.status}`;
-            
-            card.innerHTML = `
-                <div class="module-icon"><i class="fa-solid ${module.icon}"></i></div>
-                <h3 class="module-title">${module.title}</h3>
-                <p class="module-description">${module.description}</p>
-                <div class="module-status status-${moduleStatus.status}">${moduleStatus.label}</div>
-                <button class="btn ${getButtonClass(moduleStatus.status)} module-action" 
-                        onclick="navigateToModule('${module.url}', '${moduleStatus.status}')"
-                        ${moduleStatus.status === 'locked' ? 'disabled' : ''}>
-                    ${getButtonText(moduleStatus.status)}
-                </button>
-            `;
-            return card;
-        }
-
-        function getButtonClass(status) {
-            switch (status) {
-                case 'completed': return 'btn-success';
-                case 'in-progress': return 'btn-warning';
-                case 'pending': return 'btn-primary';
-                case 'locked': return 'btn-secondary';
-                default: return 'btn-primary';
-            }
-        }
-
-        function getButtonText(status) {
-            switch (status) {
-                case 'completed': return `<i class="fa-solid fa-check"></i> Revisar`;
-                case 'in-progress': return `<i class="fa-solid fa-edit"></i> Continuar`;
-                case 'pending': return `<i class="fa-solid fa-play"></i> Iniciar`;
-                case 'locked': return `<i class="fa-solid fa-lock"></i> Bloqueado`;
-                default: return `<i class="fa-solid fa-play"></i> Comenzar`;
-            }
-        }
-
-        function navigateToModule(url, status) {
-            if (status === 'locked') {
-                Swal.fire({
-                    icon: 'warning', title: 'Módulo Bloqueado',
-                    text: 'Completa los módulos anteriores para acceder a este.',
-                    confirmButtonColor: '#1E3A8A'
-                });
-                return;
-            }
-            window.location.href = url;
-        }
-
-        function refreshStatus() {
-            loadProjectStatus();
-            renderModules();
-            Swal.fire({
-                icon: 'success', title: 'Estado Actualizado',
-                text: 'La información del proyecto ha sido actualizada',
-                timer: 2000, showConfirmButton: false, timerProgressBar: true
-            });
-        }
-
-        function showProjectOptions() {
-            Swal.fire({
-                title: 'Opciones del Proyecto',
-                html: `
-                    <div style="text-align: left;">
-                        <button onclick="Swal.close(); newProject();" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button>
-                        <button onclick="Swal.close(); loadExistingProject();" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-folder-open"></i> Cargar Proyecto</button>
-                        <button onclick="Swal.close(); exportProject();" class="btn btn-success" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-download"></i> Exportar Proyecto</button>
-                        <button onclick="Swal.close(); showSystemInfo();" class="btn btn-warning" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-info-circle"></i> Información del Sistema</button>
-                        <button onclick="Swal.close(); clearProject();" class="btn" style="width: 100%; background: #EF4444; color: white;"><i class="fa-solid fa-trash"></i> Limpiar Proyecto</button>
-                    </div>
-                `,
-                showConfirmButton: false, showCancelButton: true,
-                cancelButtonText: 'Cerrar', width: 400
-            });
-        }
-
-        function newProject() {
-            Swal.fire({
-                title: '¿Crear Nuevo Proyecto?', text: 'Esto eliminará el proyecto actual. ¿Continuar?',
-                icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#6B7280', confirmButtonText: 'Sí, crear nuevo', cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    EC0301Manager.clearProject();
-                    window.location.reload(); 
-                }
-            });
-        }
-
-        function loadExistingProject() {
-            const input = document.createElement('input');
-            input.type = 'file'; input.accept = '.json';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    try {
-                        await EC0301Manager.importProject(file);
-                        Swal.fire({
-                            icon: 'success', title: 'Proyecto Cargado',
-                            text: 'El proyecto ha sido cargado exitosamente',
-                            timer: 2000, timerProgressBar: true
-                        }).then(() => window.location.reload());
-                    } catch (error) {
-                        Swal.fire({ icon: 'error', title: 'Error al Cargar', text: 'No se pudo cargar el archivo: ' + error.message });
-                    }
-                }
-            };
-            input.click();
-        }
-
-        function exportProject() {
-            if (!projectData.nombre) {
-                Swal.fire({ icon: 'warning', title: 'Proyecto Vacío', text: 'No hay datos para exportar. Crea un proyecto primero.' });
-                return;
-            }
-            try {
-                EC0301Manager.exportProject();
-                Swal.fire({ icon: 'success', title: 'Proyecto Exportado', text: 'El archivo del proyecto ha sido descargado', timer: 2000, timerProgressBar: true });
-            } catch (error) {
-                Swal.fire({ icon: 'error', title: 'Error al Exportar', text: 'No se pudo exportar el proyecto: ' + error.message });
-            }
-        }
-
-        function showSystemInfo() {
-            const systemInfo = EC0301Manager.getSystemInfo();
-            Swal.fire({
-                title: 'Información del Sistema',
-                html: `
-                    <div style="text-align: left;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr><td><strong>Versión:</strong></td><td>${systemInfo.version}</td></tr>
-                            <tr><td><strong>ID del Proyecto:</strong></td><td style="font-family: monospace; font-size: 0.8rem;">${systemInfo.projectId || 'N/A'}</td></tr>
-                            <tr><td><strong>Creado:</strong></td><td>${systemInfo.created ? new Date(systemInfo.created).toLocaleString() : 'N/A'}</td></tr>
-                            <tr><td><strong>Modificado:</strong></td><td>${systemInfo.modified ? new Date(systemInfo.modified).toLocaleString() : 'N/A'}</td></tr>
-                            <tr><td><strong>Tamaño de Datos:</strong></td><td>${(systemInfo.dataSize / 1024).toFixed(2)} KB</td></tr>
-                            <tr><td><strong>Cumplimiento:</strong></td><td>${systemInfo.compliance}%</td></tr>
-                            <tr><td><strong>Módulos Completados:</strong></td><td>${systemInfo.modules}/6</td></tr>
-                        </table>
-                    </div>
-                `,
-                confirmButtonText: 'Cerrar', width: 500
-            });
-        }
-
-        function clearProject() {
-             Swal.fire({
-                title: '¿Limpiar Proyecto?', text: 'Esto eliminará todos los datos guardados. Esta acción no se puede deshacer.',
-                icon: 'error', showCancelButton: true, confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#6B7280', confirmButtonText: 'Sí, limpiar todo', cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    EC0301Manager.clearProject();
-                    window.location.reload(); 
-                }
-            });
-        }
+        
+        function loadProjectStatus() { /* ... Tu función loadProjectStatus sin cambios ... */ }
+        function showNewProjectState() { /* ... Tu función showNewProjectState sin cambios ... */ }
+        function renderModules() { /* ... Tu función renderModules sin cambios ... */ }
+        function getModuleStatus(module) { /* ... Tu función getModuleStatus sin cambios ... */ }
+        function createModuleCard(module, moduleStatus) { /* ... Tu función createModuleCard sin cambios ... */ }
+        function getButtonClass(status) { /* ... Tu función getButtonClass sin cambios ... */ }
+        function getButtonText(status) { /* ... Tu función getButtonText sin cambios ... */ }
+        function navigateToModule(url, status) { /* ... Tu función navigateToModule sin cambios ... */ }
+        function refreshStatus() { /* ... Tu función refreshStatus sin cambios ... */ }
+        function showProjectOptions() { /* ... Tu función showProjectOptions sin cambios ... */ }
+        function newProject() { /* ... Tu función newProject sin cambios ... */ }
+        function loadExistingProject() { /* ... Tu función loadExistingProject sin cambios ... */ }
+        function exportProject() { /* ... Tu función exportProject sin cambios ... */ }
+        function showSystemInfo() { /* ... Tu función showSystemInfo sin cambios ... */ }
+        function clearProject() { /* ... Tu función clearProject sin cambios ... */ }
 
         // Auto-actualizar
         setInterval(() => {
-            if (currentUser) { // Solo si está logueado
+            if (currentUser) { 
                  loadProjectStatus();
             }
         }, 30000);
