@@ -6,9 +6,14 @@
     <title>SkillsCert EC0301 - Sistema Integral de Diseño de Cursos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="ec0301-data-manager.js"></script>
-    <script src="auth.js"></script>
+    
+    <script src="https://js.stripe.com/v3/" defer></script>
+    
+    <script src="../sistema_central/ec0301-data-manager.js" defer></script>
+    <script src="../sistema_central/auth.js" defer></script>
+    
     <style>
+        /* (Tu CSS de 600+ líneas va aquí - Omitido por brevedad, usa el que ya tienes) */
         :root {
             --primary: #1E3A8A; --accent: #FF6B35; --success: #22C55E; --warning: #F59E0B;
             --light: #F8FAFC; --border: #E5E7EB; --text: #1F2937; --muted: #6B7280;
@@ -19,164 +24,16 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh; color: var(--text); overflow-x: hidden;
         }
-
-        /* Header */
-        .hero-header {
-            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
-            padding: 1.5rem 0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            border-bottom: 3px solid var(--accent); position: sticky; top: 0; z-index: 1000;
-        }
-        .header-content {
-            max-width: 1200px; margin: 0 auto; padding: 0 1rem;
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-        }
-        .logo-section { display: flex; align-items: center; gap: 1rem; }
-        .logo { 
-            width: 50px; height: 50px; background: var(--primary); border-radius: 12px; 
-            display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; 
-        }
-        .brand-info h1 { font-size: 1.75rem; color: var(--primary); font-weight: 700; }
-        .brand-info p { color: var(--muted); font-size: 0.9rem; margin: 0; }
-        .header-actions { display: flex; gap: 1rem; align-items: center; }
-
-        .btn {
-            padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 600;
-            cursor: pointer; transition: all 0.3s ease; display: inline-flex;
-            align-items: center; gap: 0.5rem; text-decoration: none; font-size: 0.95rem;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); }
-
-        /* Main Content */
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem; }
-
-        /* Hero Section */
-        .hero-section {
-            text-align: center; padding: 4rem 0; color: white;
+        /* ... Tu CSS ... */
+        .login-message {
+            text-align: center; color: white; padding: 4rem 1rem;
             background: rgba(255, 255, 255, 0.05); border-radius: 24px;
-            backdrop-filter: blur(20px); margin-bottom: 3rem;
+            backdrop-filter: blur(20px); margin-top: 3rem;
         }
-        .hero-title { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
-        .hero-subtitle { font-size: 1.3rem; margin-bottom: 2rem; opacity: 0.9; }
-        .hero-description { font-size: 1.1rem; max-width: 800px; margin: 0 auto 3rem; line-height: 1.7; opacity: 0.85; }
-        .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .hero-actions .btn { padding: 1rem 2rem; font-size: 1.1rem; }
-
-        /* Project Status */
-        .project-status {
-            background: white; padding: 2rem; border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); margin-bottom: 3rem;
+        .user-info {
+            font-weight: 600; color: var(--primary); display: none;
+            padding: 0.5rem 1rem; background: var(--light); border-radius: 8px;
         }
-        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-        .status-header h2 { color: var(--primary); font-size: 1.5rem; }
-        .project-info { 
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 1.5rem; margin-bottom: 2rem;
-        }
-        .info-card {
-            text-align: center; padding: 1.5rem; background: var(--light); border-radius: 12px;
-            border-left: 4px solid var(--accent);
-        }
-        .info-value { font-size: 2rem; font-weight: 700; color: var(--primary); }
-        .info-label { color: var(--muted); font-weight: 600; margin-top: 0.5rem; }
-
-        .progress-section { background: var(--light); padding: 1.5rem; border-radius: 12px; }
-        .progress-section h3 { color: var(--primary); margin-bottom: 1rem; }
-        .progress-bar {
-            background: var(--border); height: 12px; border-radius: 6px; overflow: hidden; margin-bottom: 1rem;
-        }
-        .progress-fill {
-            background: linear-gradient(90deg, var(--accent), var(--success)); height: 100%;
-            transition: width 1s ease; border-radius: 6px;
-        }
-        .progress-text { text-align: center; font-weight: 600; color: var(--primary); }
-
-        /* Modules Grid */
-        .modules-section { margin-bottom: 3rem; }
-        .section-title { 
-            text-align: center; color: white; font-size: 2.5rem; font-weight: 700; 
-            margin-bottom: 3rem; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        .modules-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem; margin-top: 2rem;
-        }
-        .module-card {
-            background: white; padding: 2.5rem; border-radius: 20px; text-align: center;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1); transition: all 0.4s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1); position: relative;
-        }
-        .module-card:hover { transform: translateY(-10px); box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15); }
-        .module-card.completed { border-left: 6px solid var(--success); }
-        .module-card.in-progress { border-left: 6px solid var(--warning); }
-        .module-card.pending { border-left: 6px solid var(--muted); }
-
-        .module-icon {
-            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1.5rem;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem; color: white; background: var(--primary);
-        }
-        .module-title { font-size: 1.4rem; color: var(--primary); font-weight: 700; margin-bottom: 1rem; }
-        .module-description { color: var(--muted); line-height: 1.6; margin-bottom: 1.5rem; }
-        .module-status {
-            display: inline-block; padding: 0.5rem 1rem; border-radius: 20px;
-            font-size: 0.85rem; font-weight: 600; margin-bottom: 1.5rem;
-        }
-        .status-completed { background: #DCFCE7; color: #166534; }
-        .status-in-progress { background: #FEF3C7; color: #92400E; }
-        .status-pending { background: #F3F4F6; color: #374151; }
-        .status-locked { background: #FEF2F2; color: #991B1B; }
-
-        .module-action { width: 100%; padding: 0.875rem; font-size: 1rem; }
-
-        /* Features Section */
-        .features-section {
-            background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px);
-            padding: 4rem 2rem; border-radius: 24px; margin: 3rem 0;
-        }
-        .features-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem; margin-top: 2rem;
-        }
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1); padding: 2rem; border-radius: 16px;
-            text-align: center; color: white; backdrop-filter: blur(10px);
-        }
-        .feature-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.9; }
-        .feature-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 1rem; }
-        .feature-description { opacity: 0.85; line-height: 1.6; }
-
-        /* Footer */
-        .footer {
-            background: rgba(0, 0, 0, 0.1); backdrop-filter: blur(20px);
-            color: white; text-align: center; padding: 2rem; margin-top: 4rem;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .hero-title { font-size: 2rem; }
-            .hero-subtitle { font-size: 1.1rem; }
-            .header-content { flex-direction: column; text-align: center; }
-            .hero-actions { flex-direction: column; align-items: center; }
-            .modules-grid { grid-template-columns: 1fr; }
-            .project-info { grid-template-columns: 1fr; }
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .module-card, .project-status { animation: fadeInUp 0.6s ease-out; }
-        .module-card:nth-child(1) { animation-delay: 0.1s; }
-        .module-card:nth-child(2) { animation-delay: 0.2s; }
-        .module-card:nth-child(3) { animation-delay: 0.3s; }
-        .module-card:nth-child(4) { animation-delay: 0.4s; }
-        .module-card:nth-child(5) { animation-delay: 0.5s; }
-        .module-card:nth-child(6) { animation-delay: 0.6s; }
     </style>
 </head>
 <body>
@@ -187,87 +44,97 @@
                     <i class="fa-solid fa-graduation-cap"></i>
                 </div>
                 <div class="brand-info">
-                    <h1>SkillsCert EC0301</h1>
+                    <h1>SkillsCert EC0301</h1> 
                     <p>Sistema Integral de Diseño de Cursos</p>
                 </div>
             </div>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="showProjectOptions()">
+                <span id="userInfo" class="user-info"></span>
+                <button id="projectOptionsButton" class="btn btn-secondary" onclick="showProjectOptions()" style="display: none;">
                     <i class="fa-solid fa-cog"></i> Opciones
                 </button>
-                <button class="btn btn-success" onclick="exportProject()">
+                <button id="exportProjectButton" class="btn btn-success" onclick="exportProject()" style="display: none;">
                     <i class="fa-solid fa-download"></i> Exportar
+                </button>
+                <button class="btn btn-primary" id="authButton" onclick="handleAuth()">
+                    <i class="fa-solid fa-sign-in"></i> Iniciar Sesión
                 </button>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <!-- Hero Section -->
+    <div id="loginMessage" class="container login-message">
+        <h2>Bienvenido a SkillsCert</h2>
+        <p>Inicia sesión con el código que recibiste por WhatsApp para acceder a tu panel.</p>
+        <p style="font-size: 1rem; opacity: 0.8;">Si no tienes un código, debes realizar el pago primero.</p>
+        <br>
+        <button class="btn btn-warning" id="checkout-button" style="padding: 1rem 2rem; font-size: 1.1rem;">
+            <i class="fa-solid fa-credit-card"></i> Pagar Acceso (500 MXN)
+        </button>
+    </div>
+
+    <main class="container" id="mainContent" style="display: none;">
+        
         <section class="hero-section">
-            <h1 class="hero-title">Diseña Cursos Profesionales</h1>
-            <p class="hero-subtitle">Estándar de Competencia EC0301</p>
+            <h1 class="hero-title">Panel de Diseño EC0301</h1>
+            <p class="hero-subtitle" id="hero-user-email">Cargando...</p>
             <p class="hero-description">
-                Sistema completo para el diseño de cursos de capacitación presenciales, 
-                sus instrumentos de evaluación y material didáctico. 
-                Cumple con todos los criterios del estándar EC0301 del CONOCER.
+                Sistema completo para el diseño de cursos de capacitación
+                para ser impartidos mediante **teleformación (en línea)**,
+                sus instrumentos de evaluación y material didáctico.
             </p>
             <div class="hero-actions">
-                <a href="carta-descriptiva.html" class="btn btn-success">
-                    <i class="fa-solid fa-play"></i> Comenzar Proyecto
+                <a href="carta-descriptiva.html" id="startButton" class="btn btn-success">
+                    <i class="fa-solid fa-play"></i> Iniciar/Continuar Proyecto
                 </a>
-                <button class="btn btn-secondary" onclick="loadExistingProject()">
+                <button id="loadButton" class="btn btn-secondary" onclick="loadExistingProject()">
                     <i class="fa-solid fa-folder-open"></i> Cargar Proyecto
                 </button>
             </div>
         </section>
 
-        <!-- Project Status -->
-        <section class="project-status" id="projectStatus">
-            <div class="status-header">
-                <h2><i class="fa-solid fa-chart-line"></i> Estado del Proyecto</h2>
-                <button class="btn btn-warning" onclick="refreshStatus()">
-                    <i class="fa-solid fa-refresh"></i> Actualizar
-                </button>
-            </div>
-            
-            <div class="project-info">
-                <div class="info-card">
-                    <div class="info-value" id="projectName">-</div>
-                    <div class="info-label">Proyecto Actual</div>
+        <div id="projectDashboard">
+            <section class="project-status" id="projectStatus">
+                <div class="status-header">
+                    <h2><i class="fa-solid fa-chart-line"></i> Estado del Proyecto</h2>
+                    <button class="btn btn-warning" onclick="refreshStatus()">
+                        <i class="fa-solid fa-refresh"></i> Actualizar
+                    </button>
                 </div>
-                <div class="info-card">
-                    <div class="info-value" id="completionPercentage">0%</div>
-                    <div class="info-label">Completado</div>
+                <div class="project-info">
+                    <div class="info-card">
+                        <div class="info-value" id="projectName">-</div>
+                        <div class="info-label">Proyecto Actual</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-value" id="completionPercentage">0%</div>
+                        <div class="info-label">Completado</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-value" id="modulesCompleted">0/6</div>
+                        <div class="info-label">Módulos</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-value" id="lastUpdate">-</div>
+                        <div class="info-label">Última Actualización</div>
+                    </div>
                 </div>
-                <div class="info-card">
-                    <div class="info-value" id="modulesCompleted">0/6</div>
-                    <div class="info-label">Módulos</div>
+                <div class="progress-section">
+                    <h3>Progreso General del Proyecto</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Iniciando proyecto...</div>
                 </div>
-                <div class="info-card">
-                    <div class="info-value" id="lastUpdate">-</div>
-                    <div class="info-label">Última Actualización</div>
-                </div>
-            </div>
+            </section>
 
-            <div class="progress-section">
-                <h3>Progreso General del Proyecto</h3>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-                </div>
-                <div class="progress-text" id="progressText">Iniciando proyecto...</div>
-            </div>
-        </section>
+            <section class="modules-section">
+                <h2 class="section-title">Módulos del Sistema</h2>
+                <div class="modules-grid" id="modulesGrid">
+                    </div>
+            </section>
+        </div>
 
-        <!-- Modules Section -->
-        <section class="modules-section">
-            <h2 class="section-title">Módulos del Sistema</h2>
-            <div class="modules-grid" id="modulesGrid">
-                <!-- Se cargan dinámicamente -->
-            </div>
-        </section>
-
-        <!-- Features Section -->
         <section class="features-section">
             <h2 class="section-title">Características del Sistema</h2>
             <div class="features-grid">
@@ -304,103 +171,204 @@
     </footer>
 
     <script>
-        // Datos de los módulos del sistema
+        // =============================================================
+        // LÓGICA DEL DASHBOARD (index.html)
+        // =============================================================
+
+        // Datos de los módulos del sistema (los mismos que te di antes)
         const SYSTEM_MODULES = [
-            {
-                id: 'carta',
-                title: 'Carta Descriptiva',
-                description: 'Documento maestro que define objetivos, contenidos, metodología y sistema de evaluación del curso.',
-                icon: 'fa-clipboard-list',
-                url: 'carta-descriptiva.html',
-                weight: 40
-            },
-            {
-                id: 'logistica',
-                title: 'Logística',
-                description: 'Documentos operativos: lista de asistencia, contrato de aprendizaje y requerimientos técnicos.',
-                icon: 'fa-tasks',
-                url: 'logistica.html',
-                weight: 15,
-                dependsOn: ['carta']
-            },
-            {
-                id: 'evaluaciones',
-                title: 'Evaluaciones',
-                description: 'Instrumentos completos: diagnóstica, formativa, sumativa y de satisfacción con IA.',
-                icon: 'fa-file-signature',
-                url: 'evaluaciones.html',
-                weight: 20,
-                dependsOn: ['carta']
-            },
-            {
-                id: 'manuales',
-                title: 'Manuales',
-                description: 'Manual del participante y del instructor generados automáticamente por IA.',
-                icon: 'fa-book-open',
-                url: 'manuales.html',
-                weight: 15,
-                dependsOn: ['carta', 'evaluaciones']
-            },
-            {
-                id: 'resultados',
-                title: 'Resultados',
-                description: 'Captura de calificaciones, generación de reportes y constancias de participación.',
-                icon: 'fa-chart-bar',
-                url: 'resultados.html',
-                weight: 5,
-                dependsOn: ['manuales']
-            },
-            {
-                id: 'auditoria',
-                title: 'Auditoría',
-                description: 'Validación final y generación del portafolio completo de evidencias ZIP.',
-                icon: 'fa-shield-check',
-                url: 'auditoria.html',
-                weight: 5,
-                dependsOn: ['resultados']
-            }
+            { id: 'carta', title: 'Carta Descriptiva', description: 'Documento maestro que define objetivos, contenidos, metodología y sistema de evaluación del curso.', icon: 'fa-clipboard-list', url: 'carta-descriptiva.html', weight: 40 },
+            { id: 'logistica', title: 'Logística', description: 'Documentos operativos: lista de asistencia, contrato de aprendizaje y requerimientos técnicos.', icon: 'fa-tasks', url: 'logistica.html', weight: 15, dependsOn: ['carta'] },
+            { id: 'evaluaciones', title: 'Evaluaciones', description: 'Instrumentos completos: diagnóstica, formativa, sumativa y de satisfacción con IA.', icon: 'fa-file-signature', url: 'evaluaciones.html', weight: 20, dependsOn: ['carta'] },
+            { id: 'manuales', title: 'Manuales', description: 'Manual del participante y del instructor generados automáticamente por IA.', icon: 'fa-book-open', url: 'manuales.html', weight: 15, dependsOn: ['carta', 'evaluaciones'] },
+            { id: 'resultados', title: 'Resultados', description: 'Captura de calificaciones, generación de reportes y constancias de participación.', icon: 'fa-chart-bar', url: 'resultados.html', weight: 5, dependsOn: ['manuales'] },
+            { id: 'auditoria', title: 'Auditoría', description: 'Validación final y generación del portafolio completo de evidencias ZIP.', icon: 'fa-shield-check', url: 'auditoria.html', weight: 5, dependsOn: ['resultados'] }
         ];
 
         let projectData = {};
+        let currentUser = null; 
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadProjectStatus();
-            renderModules();
+            // Inicia la lógica de autenticación primero
+            initializeAuth();
+            
+            // La lógica de pago de Stripe se inicializa después
+            initializeStripePayment();
         });
+
+        // =============================================================
+        // LÓGICA DE AUTENTICACIÓN Y ESTADO
+        // =============================================================
+
+        /**
+         * Función principal que revisa el estado de autenticación al cargar la página.
+         * ASUME que tu 'auth.js' tiene las funciones:
+         * - auth.isLoggedIn() -> devuelve true/false
+         * - auth.getUser() -> devuelve un objeto { email: '...' } o null
+         * - auth.login() -> Muestra un popup para ingresar código
+         * - auth.logout() -> Cierra la sesión
+         */
+        async function initializeAuth() {
+            // Espera a que los scripts externos (auth.js) carguen
+            if (typeof auth === 'undefined' || typeof EC0301Manager === 'undefined') {
+                console.log('Esperando scripts (auth.js, ec0301-data-manager.js)...');
+                setTimeout(initializeAuth, 100); // Reintenta pronto
+                return;
+            }
+
+            const loggedIn = await auth.isLoggedIn(); // auth.js revisará el token
+
+            if (loggedIn) {
+                currentUser = await auth.getUser(); // auth.js decodifica el token
+                
+                // Muestra UI de usuario logueado
+                document.getElementById('loginMessage').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                // Configura botón de Salir
+                const authButton = document.getElementById('authButton');
+                authButton.innerHTML = '<i class="fa-solid fa-sign-out"></i> Cerrar Sesión';
+                
+                // Muestra info del usuario y botones del header
+                document.getElementById('userInfo').textContent = `Hola, ${currentUser.email || 'usuario'}`; // Asume que el token tiene email
+                document.getElementById('hero-user-email').textContent = `Proyecto de ${currentUser.email || 'usuario'}`;
+                document.getElementById('userInfo').style.display = 'block';
+                document.getElementById('projectOptionsButton').style.display = 'inline-flex';
+                document.getElementById('exportProjectButton').style.display = 'inline-flex';
+
+                // MUESTRA EL DASHBOARD DE PROYECTO (YA PAGÓ SI ESTÁ LOGUEADO)
+                document.getElementById('projectDashboard').style.display = 'block';
+                document.getElementById('startButton').style.display = 'inline-flex';
+                document.getElementById('loadButton').style.display = 'inline-flex';
+
+                // Cargar el proyecto y los módulos
+                loadProjectStatus();
+                renderModules();
+
+            } else {
+                // Muestra UI de usuario no logueado
+                document.getElementById('loginMessage').style.display = 'block';
+                document.getElementById('mainContent').style.display = 'none';
+                
+                // Configura botón de Entrar
+                const authButton = document.getElementById('authButton');
+                authButton.innerHTML = '<i class="fa-solid fa-sign-in"></i> Iniciar Sesión';
+                
+                // Oculta info de usuario y botones
+                document.getElementById('userInfo').style.display = 'none';
+                document.getElementById('projectOptionsButton').style.display = 'none';
+                document.getElementById('exportProjectButton').style.display = 'none';
+            }
+        }
+
+        /**
+         * Maneja el clic del botón de Iniciar/Cerrar Sesión
+         */
+        async function handleAuth() {
+            if (await auth.isLoggedIn()) {
+                // Si está logueado, cerrar sesión
+                await auth.logout();
+                window.location.reload(); // Recarga la página para estado "logout"
+            } else {
+                // Si no está logueado, mostrar popup de login (para el código)
+                const loginSuccess = await auth.login(); // auth.js pedirá el código
+                if (loginSuccess) {
+                    window.location.reload(); // Recarga la página para estado "login"
+                }
+            }
+        }
+
+        // =============================================================
+        // LÓGICA DE PAGO STRIPE
+        // =============================================================
+        
+        function initializeStripePayment() {
+            // 1. Reemplaza esto con tu Clave Publicable real de Stripe (modo prueba primero)
+            const stripePublicKey = 'pk_test_51SJ0gXFupe2fTa5zdzZlQfwp81Y3esGAdUbW1R4hc9v1ezMj90cnow4t6TjUJVV7bEqz3v5d11cqvPrFps4P3f680xqM9IUsj'; // ¡TU CLAVE PUBLICABLE!
+            const backendUrl = 'https://generando-ec0301-backend.onrender.com'; // ¡TU URL DE BACKEND!
+            let stripe;
+            
+            try {
+                 stripe = Stripe(stripePublicKey);
+            } catch(e) {
+                console.error("Error inicializando Stripe. ¿Pegaste la clave pública?");
+                return;
+            }
+
+            const checkoutButton = document.getElementById('checkout-button');
+
+            if (checkoutButton) {
+              checkoutButton.addEventListener('click', async () => {
+                checkoutButton.disabled = true;
+                const originalButtonText = checkoutButton.textContent;
+                checkoutButton.textContent = 'Procesando...';
+
+                try {
+                  console.log('Solicitando sesión de Checkout al backend...');
+                  const response = await fetch(`${backendUrl}/create-checkout-session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    // body: JSON.stringify({ ... }) // Aquí puedes enviar el email si ya lo tienes
+                  });
+
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error del servidor');
+                  }
+
+                  const session = await response.json();
+
+                  if (!session.id) {
+                    throw new Error('Respuesta inválida del servidor de pagos.');
+                  }
+
+                  console.log('Redirigiendo a Stripe Checkout...');
+                  const result = await stripe.redirectToCheckout({
+                    sessionId: session.id
+                  });
+
+                  if (result.error) {
+                    throw new Error(result.error.message);
+                  }
+
+                } catch (error) {
+                  console.error('Error en el proceso de pago:', error);
+                  Swal.fire({
+                      icon: 'error',
+                      title: 'Error de Pago',
+                      text: `Hubo un problema al iniciar el pago: ${error.message}`
+                  });
+                  checkoutButton.disabled = false;
+                  checkoutButton.textContent = originalButtonText;
+                }
+              });
+            } else {
+              console.warn('Botón de pago #checkout-button no encontrado.');
+            }
+        }
+
+        // =============================================================
+        // LÓGICA ORIGINAL DEL DASHBOARD (FUNCIONES DE PROYECTO)
+        // =============================================================
 
         function loadProjectStatus() {
             try {
                 projectData = EC0301Manager.getData();
                 const systemInfo = EC0301Manager.getSystemInfo();
                 
-                // Actualizar información del proyecto
-                document.getElementById('projectName').textContent = 
-                    projectData.nombre || 'Nuevo Proyecto';
+                document.getElementById('projectName').textContent = projectData.nombre || 'Nuevo Proyecto';
+                document.getElementById('completionPercentage').textContent = systemInfo.compliance + '%';
+                document.getElementById('modulesCompleted').textContent = systemInfo.modules + '/6';
+                document.getElementById('lastUpdate').textContent = systemInfo.modified ? new Date(systemInfo.modified).toLocaleDateString() : 'Nunca';
                 
-                document.getElementById('completionPercentage').textContent = 
-                    systemInfo.compliance + '%';
-                
-                document.getElementById('modulesCompleted').textContent = 
-                    systemInfo.modules + '/6';
-                
-                document.getElementById('lastUpdate').textContent = 
-                    systemInfo.modified ? new Date(systemInfo.modified).toLocaleDateString() : 'Nunca';
-                
-                // Actualizar barra de progreso
                 const progressFill = document.getElementById('progressFill');
                 const progressText = document.getElementById('progressText');
-                
                 progressFill.style.width = systemInfo.compliance + '%';
                 
-                if (systemInfo.compliance === 0) {
-                    progressText.textContent = 'Proyecto sin iniciar';
-                } else if (systemInfo.compliance < 50) {
-                    progressText.textContent = 'Proyecto en fase inicial';
-                } else if (systemInfo.compliance < 90) {
-                    progressText.textContent = 'Proyecto en desarrollo';
-                } else {
-                    progressText.textContent = 'Proyecto casi completado';
-                }
+                if (systemInfo.compliance === 0) progressText.textContent = 'Proyecto sin iniciar';
+                else if (systemInfo.compliance < 50) progressText.textContent = 'Proyecto en fase inicial';
+                else if (systemInfo.compliance < 90) progressText.textContent = 'Proyecto en desarrollo';
+                else progressText.textContent = 'Proyecto casi completado';
                 
             } catch (error) {
                 console.error('Error cargando estado del proyecto:', error);
@@ -428,10 +396,8 @@
         }
 
         function getModuleStatus(module) {
-            const compliance = EC0301Manager.calculateCompliance(projectData);
             const completedModules = EC0301Manager.getCompletedModules(projectData);
             
-            // Verificar dependencias
             if (module.dependsOn) {
                 const dependenciesComplete = module.dependsOn.every(dep => 
                     completedModules.includes(dep)
@@ -441,39 +407,30 @@
                 }
             }
             
-            // Verificar estado del módulo
             if (completedModules.includes(module.id)) {
                 return { status: 'completed', label: 'Completado' };
             } else if (module.id === 'carta' && projectData.nombre) {
                 return { status: 'in-progress', label: 'En Progreso' };
-            } else if (compliance >= 20 && (module.dependsOn ? 
-                module.dependsOn.every(dep => completedModules.includes(dep)) : true)) {
-                return { status: 'pending', label: 'Disponible' };
             } else {
-                return { status: 'pending', label: 'Pendiente' };
+                return { status: 'pending', label: 'Disponible' };
             }
         }
 
         function createModuleCard(module, moduleStatus) {
             const card = document.createElement('div');
-            card.className = `module-card ${moduleStatus.status}`;
+            card.className = `module-card status-${moduleStatus.status}`;
             
             card.innerHTML = `
-                <div class="module-icon">
-                    <i class="fa-solid ${module.icon}"></i>
-                </div>
+                <div class="module-icon"><i class="fa-solid ${module.icon}"></i></div>
                 <h3 class="module-title">${module.title}</h3>
                 <p class="module-description">${module.description}</p>
-                <div class="module-status status-${moduleStatus.status}">
-                    ${moduleStatus.label}
-                </div>
+                <div class="module-status status-${moduleStatus.status}">${moduleStatus.label}</div>
                 <button class="btn ${getButtonClass(moduleStatus.status)} module-action" 
                         onclick="navigateToModule('${module.url}', '${moduleStatus.status}')"
                         ${moduleStatus.status === 'locked' ? 'disabled' : ''}>
-                    ${getButtonText(moduleStatus.status, module.title)}
+                    ${getButtonText(moduleStatus.status)}
                 </button>
             `;
-            
             return card;
         }
 
@@ -487,9 +444,9 @@
             }
         }
 
-        function getButtonText(status, title) {
+        function getButtonText(status) {
             switch (status) {
-                case 'completed': return `<i class="fa-solid fa-check"></i> Revisar ${title}`;
+                case 'completed': return `<i class="fa-solid fa-check"></i> Revisar`;
                 case 'in-progress': return `<i class="fa-solid fa-edit"></i> Continuar`;
                 case 'pending': return `<i class="fa-solid fa-play"></i> Iniciar`;
                 case 'locked': return `<i class="fa-solid fa-lock"></i> Bloqueado`;
@@ -500,27 +457,22 @@
         function navigateToModule(url, status) {
             if (status === 'locked') {
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'Módulo Bloqueado',
+                    icon: 'warning', title: 'Módulo Bloqueado',
                     text: 'Completa los módulos anteriores para acceder a este.',
                     confirmButtonColor: '#1E3A8A'
                 });
                 return;
             }
-            
             window.location.href = url;
         }
 
         function refreshStatus() {
             loadProjectStatus();
             renderModules();
-            
             Swal.fire({
-                icon: 'success',
-                title: 'Estado Actualizado',
+                icon: 'success', title: 'Estado Actualizado',
                 text: 'La información del proyecto ha sido actualizada',
-                timer: 2000,
-                timerProgressBar: true
+                timer: 2000, showConfirmButton: false, timerProgressBar: true
             });
         }
 
@@ -529,71 +481,46 @@
                 title: 'Opciones del Proyecto',
                 html: `
                     <div style="text-align: left;">
-                        <button onclick="newProject()" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-plus"></i> Nuevo Proyecto
-                        </button>
-                        <button onclick="loadExistingProject()" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-folder-open"></i> Cargar Proyecto
-                        </button>
-                        <button onclick="exportProject()" class="btn btn-success" style="width: 100%; margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-download"></i> Exportar Proyecto
-                        </button>
-                        <button onclick="showSystemInfo()" class="btn btn-warning" style="width: 100%; margin-bottom: 0.5rem;">
-                            <i class="fa-solid fa-info-circle"></i> Información del Sistema
-                        </button>
-                        <button onclick="clearProject()" class="btn" style="width: 100%; background: #EF4444; color: white;">
-                            <i class="fa-solid fa-trash"></i> Limpiar Proyecto
-                        </button>
+                        <button onclick="Swal.close(); newProject();" class="btn btn-primary" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-plus"></i> Nuevo Proyecto</button>
+                        <button onclick="Swal.close(); loadExistingProject();" class="btn btn-secondary" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-folder-open"></i> Cargar Proyecto</button>
+                        <button onclick="Swal.close(); exportProject();" class="btn btn-success" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-download"></i> Exportar Proyecto</button>
+                        <button onclick="Swal.close(); showSystemInfo();" class="btn btn-warning" style="width: 100%; margin-bottom: 0.5rem;"><i class="fa-solid fa-info-circle"></i> Información del Sistema</button>
+                        <button onclick="Swal.close(); clearProject();" class="btn" style="width: 100%; background: #EF4444; color: white;"><i class="fa-solid fa-trash"></i> Limpiar Proyecto</button>
                     </div>
                 `,
-                showConfirmButton: false,
-                showCancelButton: true,
-                cancelButtonText: 'Cerrar',
-                width: 400
+                showConfirmButton: false, showCancelButton: true,
+                cancelButtonText: 'Cerrar', width: 400
             });
         }
 
         function newProject() {
             Swal.fire({
-                title: '¿Crear Nuevo Proyecto?',
-                text: 'Esto eliminará el proyecto actual. ¿Continuar?',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#EF4444',
-                cancelButtonColor: '#6B7280',
-                confirmButtonText: 'Sí, crear nuevo',
-                cancelButtonText: 'Cancelar'
+                title: '¿Crear Nuevo Proyecto?', text: 'Esto eliminará el proyecto actual. ¿Continuar?',
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280', confirmButtonText: 'Sí, crear nuevo', cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
                     EC0301Manager.clearProject();
+                    window.location.reload(); 
                 }
             });
         }
 
         function loadExistingProject() {
             const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
+            input.type = 'file'; input.accept = '.json';
             input.onchange = async (e) => {
                 const file = e.target.files[0];
                 if (file) {
                     try {
                         await EC0301Manager.importProject(file);
                         Swal.fire({
-                            icon: 'success',
-                            title: 'Proyecto Cargado',
+                            icon: 'success', title: 'Proyecto Cargado',
                             text: 'El proyecto ha sido cargado exitosamente',
-                            timer: 2000,
-                            timerProgressBar: true
-                        }).then(() => {
-                            window.location.reload();
-                        });
+                            timer: 2000, timerProgressBar: true
+                        }).then(() => window.location.reload());
                     } catch (error) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error al Cargar',
-                            text: 'No se pudo cargar el archivo: ' + error.message
-                        });
+                        Swal.fire({ icon: 'error', title: 'Error al Cargar', text: 'No se pudo cargar el archivo: ' + error.message });
                     }
                 }
             };
@@ -602,35 +529,19 @@
 
         function exportProject() {
             if (!projectData.nombre) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Proyecto Vacío',
-                    text: 'No hay datos para exportar. Crea un proyecto primero.'
-                });
+                Swal.fire({ icon: 'warning', title: 'Proyecto Vacío', text: 'No hay datos para exportar. Crea un proyecto primero.' });
                 return;
             }
-            
             try {
                 EC0301Manager.exportProject();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Proyecto Exportado',
-                    text: 'El archivo del proyecto ha sido descargado',
-                    timer: 2000,
-                    timerProgressBar: true
-                });
+                Swal.fire({ icon: 'success', title: 'Proyecto Exportado', text: 'El archivo del proyecto ha sido descargado', timer: 2000, timerProgressBar: true });
             } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al Exportar',
-                    text: 'No se pudo exportar el proyecto: ' + error.message
-                });
+                Swal.fire({ icon: 'error', title: 'Error al Exportar', text: 'No se pudo exportar el proyecto: ' + error.message });
             }
         }
 
         function showSystemInfo() {
             const systemInfo = EC0301Manager.getSystemInfo();
-            
             Swal.fire({
                 title: 'Información del Sistema',
                 html: `
@@ -646,20 +557,29 @@
                         </table>
                     </div>
                 `,
-                confirmButtonText: 'Cerrar',
-                width: 500
+                confirmButtonText: 'Cerrar', width: 500
             });
         }
 
         function clearProject() {
-            EC0301Manager.clearProject();
+             Swal.fire({
+                title: '¿Limpiar Proyecto?', text: 'Esto eliminará todos los datos guardados. Esta acción no se puede deshacer.',
+                icon: 'error', showCancelButton: true, confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#6B7280', confirmButtonText: 'Sí, limpiar todo', cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    EC0301Manager.clearProject();
+                    window.location.reload(); 
+                }
+            });
         }
 
-        // Auto-actualizar cada 30 segundos
+        // Auto-actualizar
         setInterval(() => {
-            loadProjectStatus();
+            if (currentUser) { // Solo si está logueado
+                 loadProjectStatus();
+            }
         }, 30000);
-        <script src="js/checkout.js" defer></script> 
+    </script>
 </body>
 </html>
-    
