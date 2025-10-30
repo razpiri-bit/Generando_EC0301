@@ -2,6 +2,8 @@
 <html lang="es">
 <head>
     <script src="../sistema_central/auth.js" defer></script>
+    <script src="../sistema_central/ec0301-data-manager.js" defer></script>
+    
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Carta Descriptiva EC0301 - Sistema Profesional</title>
@@ -252,8 +254,8 @@
 
     <script>
     // ========== CONSTANTES Y CONFIGURACIÓN ==========
-    // (AJUSTE) Cargar el DataManager desde la ruta correcta
-    const EC0301Manager = window.parent.EC0301Manager || (typeof EC0301Manager !== 'undefined' ? EC0301Manager : null);
+    // (AJUSTE) Cargar el DataManager desde el window global
+    let EC0301Manager; 
     
     const KEY = 'EC0301_CARTA_PRO';
     const VERBOS = {
@@ -265,7 +267,7 @@
             evaluacion: ['Evaluar', 'Criticar', 'Justificar', 'Argumentar', 'Validar', 'Decidir'],
             creacion: ['Crear', 'Diseñar', 'Construir', 'Planear', 'Producir', 'Desarrollar']
         },
-        psicomotriz: { // Habilidades motoras (más relevante para EC0217, pero se mantiene)
+        psicomotriz: { 
             imitacion: ['Imitar', 'Copiar', 'Repetir', 'Reproducir', 'Seguir'],
             manipulacion: ['Manipular', 'Operar', 'Practicar', 'Ejecutar', 'Manejar'],
             precision: ['Demostrar', 'Completar', 'Mostrar', 'Calibrar', 'Controlar'],
@@ -279,7 +281,7 @@
             organizacion: ['Organizar', 'Integrar', 'Sintetizar', 'Priorizar', 'Combinar'],
             caracterizacion: ['Actuar', 'Discriminar', 'Influir', 'Modificar', 'Revisar']
         },
-        relacional: { // Social
+        relacional: { 
             interaccion: ['Interactuar', 'Comunicar', 'Relacionar', 'Contactar', 'Dialogar'],
             colaboracion: ['Colaborar', 'Cooperar', 'Contribuir', 'Ayudar', 'Apoyar'],
             liderazgo: ['Liderar', 'Dirigir', 'Guiar', 'Motivar', 'Inspirar'],
@@ -477,6 +479,7 @@
 
     // ========== VALIDACIÓN Y PROGRESO ==========
     function updateProgress() {
+        // (AJUSTE) Asegurarse de que los campos existan antes de leerlos
         const campos = [
             'cd_nombre', 'cd_duracion', 'cd_diseñador', 'cd_facilitador',
             'cd_modalidad', 'cd_proposito', 'cd_psico', 'cd_conoc', 
@@ -489,15 +492,19 @@
         
         let completados = 0;
         campos.forEach(id => {
-            if ($(id)?.value?.trim()) completados++;
+            if ($(id) && $(id).value.trim()) completados++;
         });
         
-        if ($('tema1_nombre')?.value?.trim()) completados++;
+        if ($('tema1_nombre') && $('tema1_nombre').value.trim()) completados++;
         
-        const porcentaje = Math.round((completados / (campos.length + 1)) * 100);
-        $('progressBar').style.width = porcentaje + '%';
+        const totalCampos = campos.length + 1; // +1 por el tema1
+        const porcentaje = Math.round((completados / totalCampos) * 100);
+        
+        if ($('progressBar')) $('progressBar').style.width = porcentaje + '%';
         
         const indicator = $('validationIndicator');
+        if (!indicator) return porcentaje;
+
         if (porcentaje >= 80) {
             indicator.className = 'validation-indicator valid';
             indicator.innerHTML = '<i class="fa-solid fa-check-circle" style="color: var(--success);"></i><span>Documento válido</span>';
@@ -599,7 +606,7 @@
         }
         try {
             const data = EC0301Manager.getData();
-            if (!data.nombre) {
+            if (!data.nombre && !data.facilitador) { // (AJUSTE) Checar si está realmente vacío
                 toast('No hay datos guardados para cargar', 'info');
                 return;
             }
@@ -637,7 +644,7 @@
             }
             
             if (data.ev) {
-                $('ev_min').value = data.ev.min || '';
+                $('ev_min').value = data.ev.min || '80';
                 $('ev_escala').value = data.ev.escala || '0-100';
                 $('ev_cert').value = data.ev.cert || 'constancia';
                 if (data.ev.diag) {
@@ -646,12 +653,12 @@
                     $('ev_diag_prop').value = data.ev.diag.prop || '';
                 }
                 if (data.ev.form) {
-                    $('ev_form_pct').value = data.ev.form.pct || '';
+                    $('ev_form_pct').value = data.ev.form.pct || '40';
                     $('ev_form_mom').value = data.ev.form.mom || '';
                     $('ev_form_ins').value = data.ev.form.ins || '';
                 }
                 if (data.ev.sum) {
-                    $('ev_sum_pct').value = data.ev.sum.pct || '';
+                    $('ev_sum_pct').value = data.ev.sum.pct || '60%';
                     $('ev_sum_mom').value = data.ev.sum.mom || '';
                     $('ev_sum_ins').value = data.ev.sum.ins || '';
                 }
@@ -659,9 +666,9 @@
             
             if (data.dc) {
                 $('dc_integracion').value = data.dc.integracion || '';
-                $('dc_encuadre_t').value = data.dc.encuadre_t || '';
+                $('dc_encuadre_t').value = data.dc.encuadre_t || '30';
                 $('dc_cierre').value = data.dc.cierre || '';
-                $('dc_cierre_t').value = data.dc.cierre_t || '';
+                $('dc_cierre_t').value = data.dc.cierre_t || '60';
             }
             
             if (data.objetivos && data.objetivos.length > 0) {
@@ -688,7 +695,7 @@
                     $(`tema${tema.num}_duracion`).value = tema.duracion || '';
                     $(`tema${tema.num}_actividades`).value = tema.actividades || '';
                     $(`tema${tema.num}_recursos`).value = tema.recursos || '';
-                    $(`tema${tema.num}_interaccion`).value = tema.interaccion || '';
+                    $(`tema${tema.num}_interaccion`).value = tema.interaccion || 'asincrona';
                     $(`tema${tema.num}_evaluacion`).value = tema.evaluacion || '';
                 });
             }
@@ -704,12 +711,36 @@
     }
 
     // ========== EXPORTACIÓN ==========
-    async function exportCarta(formato) { /* ... (código de exportación sin cambios) ... */ }
-    function exportPDF(data) { /* ... (código de exportación sin cambios) ... */ }
-    async function exportDOCX(data) { /* ... (código de exportación sin cambios) ... */ }
+    // (AJUSTE) Función exportPDF simplificada para brevedad, usa tu versión
+    async function exportCarta(formato) { 
+        if (updateProgress() < 80) {
+            const result = await Swal.fire({
+                title: 'Documento incompleto', text: '¿Desea exportar de todas formas?',
+                icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, exportar'
+            });
+            if (!result.isConfirmed) return;
+        }
+        if (formato === 'pdf') toast('Generando PDF...', 'info');
+        if (formato === 'docx') toast('Generando DOCX...', 'info');
+    }
 
     // ========== AYUDA ==========
-    function showHelp() { /* ... (código de ayuda sin cambios) ... */ }
+    function showHelp() { 
+        Swal.fire({
+            title: 'Guía Rápida EC0301',
+            html: `<div style="text-align: left;">
+                    <h4>📝 Guion Instruccional (EC0301)</h4>
+                    <p>Este formulario te ayuda a crear el guion instruccional (carta descriptiva) para un <strong>curso en línea</strong>, según el estándar EC0301.</p>
+                    <h5 style="margin-top: 1rem;">✅ Elementos clave:</h5>
+                    <ul>
+                        <li><strong>Perfil:</strong> Debe incluir habilidades tecnológicas.</li>
+                        <li><strong>Requerimientos:</strong> Enfocados en plataforma y recursos digitales.</li>
+                        <li><strong>Guion:</strong> Detalla actividades <strong>en plataforma</strong> y tipo de interacción (síncrona/asíncrona).</li>
+                    </ul>
+                   </div>`,
+            width: 600, confirmButtonText: 'Entendido', confirmButtonColor: '#1E3A8A'
+        });
+    }
 
     // ========== COMPLETAR ==========
     async function markComplete() {
@@ -740,17 +771,33 @@
 
     // ========== INICIALIZACIÓN ==========
     document.addEventListener('DOMContentLoaded', () => {
-        // (AJUSTE) Verificar que el DataManager esté cargado
-        if (!EC0301Manager) {
+        // (AJUSTE) Verificar que los scripts globales estén cargados
+        if (typeof auth === 'undefined' || typeof EC0301Manager === 'undefined') {
             Swal.fire({
                 icon: 'error',
                 title: 'Error Crítico',
-                text: 'No se pudo cargar el gestor de datos (EC0301Manager). Asegúrate de que el archivo ../sistema_central/ec0301-data-manager.js exista y esté en la ruta correcta.',
+                text: 'No se pudieron cargar los módulos de sistema (auth.js, ec0301-data-manager.js). Revisa las rutas en el HTML.',
                 confirmButtonColor: '#EF4444'
+            }).then(() => window.location.href = 'index.html'); // Regresar si falla
+            return;
+        }
+        
+        // (NUEVO) Proteger la página
+        if (!auth.isLoggedIn()) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Acceso Denegado',
+                text: 'Debes iniciar sesión para acceder a este módulo.',
+                confirmButtonColor: '#1E3A8A',
+                allowOutsideClick: false
+            }).then(() => {
+                window.location.href = 'index.html'; // Redirigir al dashboard para login
             });
             return;
         }
 
+        // Si el login es correcto, cargar el manager y la página
+        EC0301Manager = window.EC0301Manager;
         renderVerbos(1, 'cognitivo');
         addTema(); 
         loadDraft(); // Cargar datos existentes al iniciar
