@@ -1,774 +1,1519 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carta Descriptiva EC0301 - Documento Maestro</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="ec0301-data-manager.js"></script>
-    <style>
-        :root {
-            --primary: #1E3A8A; --accent: #FF6B35; --success: #22C55E; --warning: #F59E0B;
-            --light: #F8FAFC; --border: #E5E7EB; --text: #1F2937; --muted: #6B7280;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh; color: var(--text);
-        }
-        .header {
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
-            padding: 1rem 0; box-shadow: 0 4px 20px rgba(0,0,0,.1);
-            border-bottom: 3px solid var(--primary); position: sticky; top: 0; z-index: 1000;
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
-        .header-content {
-            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-        }
-        h1 { font-size: 1.75rem; color: var(--primary); display: flex; align-items: center; gap: 0.75rem; }
-        .progress-bar {
-            background: var(--border); height: 8px; border-radius: 4px; overflow: hidden; margin-top: 1rem;
-        }
-        .progress-fill {
-            background: linear-gradient(90deg, var(--accent), var(--success)); height: 100%;
-            width: 0%; transition: width 0.5s ease; border-radius: 4px;
-        }
-        .toolbar {
-            display: flex; gap: 0.5rem; flex-wrap: wrap;
-        }
-        .btn {
-            padding: 0.6rem 1.2rem; border: none; border-radius: 8px; font-weight: 600;
-            cursor: pointer; transition: all 0.3s ease; display: inline-flex;
-            align-items: center; gap: 0.5rem; text-decoration: none;
-        }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-secondary { background: white; color: var(--primary); border: 2px solid var(--primary); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+import React, { useState, useEffect } from 'react';
+import { Save, FileText, CheckCircle, AlertCircle, Plus, Trash2, Download, Clock, Users, Target, BookOpen } from 'lucide-react';
 
-        .section {
-            background: white; border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            padding: 2rem; margin: 2rem 0; animation: slideUp 0.5s ease;
+const CartaDescriptivaEC0301 = () => {
+  const [activeSection, setActiveSection] = useState('info-general');
+  const [formData, setFormData] = useState({
+    // INFORMACIÓN GENERAL
+    nombreCurso: '',
+    facilitador: '',
+    lugarInstruccion: '',
+    duracionHoras: 2,
+    fechas: '',
+    perfilParticipante: '',
+    numeroParticipantes: 4,
+    proposito: '',
+    
+    // OBJETIVO GENERAL
+    objetivoGeneral: {
+      cognitivo: '',
+      psicomotor: '',
+      afectivo: '',
+      relacional: '',
+      condicion: '',
+      generado: ''
+    },
+    
+    // OBJETIVOS PARTICULARES (4 dimensiones)
+    objetivosParticulares: [
+      {
+        dimension: 'COGNITIVO',
+        sujeto: 'El Participante',
+        accion: '',
+        condicion: '',
+        temas: '',
+        tiempo: 0
+      },
+      {
+        dimension: 'PSICOMOTOR',
+        sujeto: 'El Participante',
+        accion: '',
+        condicion: '',
+        temas: '',
+        tiempo: 0
+      },
+      {
+        dimension: 'AFECTIVO',
+        sujeto: 'El Participante',
+        accion: '',
+        condicion: '',
+        temas: '',
+        tiempo: 0
+      },
+      {
+        dimension: 'RELACIONAL/SOCIALES',
+        sujeto: 'El Participante',
+        accion: '',
+        condicion: '',
+        temas: '',
+        tiempo: 0
+      }
+    ],
+    
+    // REQUERIMIENTOS
+    requerimientos: {
+      instalaciones: '',
+      equipo: '',
+      materiales: '',
+      humanos: '',
+      saludSeguridad: ''
+    },
+    
+    // EVALUACIÓN
+    evaluacion: {
+      aspectos: [
+        { aspecto: 'Evaluación Diagnóstica', porcentaje: 0, instrumento: 'Cuestionario', momento: 'Al inicio', tipo: 'Heteroevaluación' },
+        { aspecto: 'Evaluación Formativa (intermedia)', porcentaje: 50, instrumento: 'Guía de observación', momento: 'Intermedia', tipo: 'Heteroevaluación' },
+        { aspecto: 'Evaluación Sumativa (final)', porcentaje: 40, instrumento: 'Cuestionario', momento: 'Al final', tipo: 'Heteroevaluación' },
+        { aspecto: 'Evaluación Satisfacción', porcentaje: 10, instrumento: 'Cuestionario', momento: 'Al final', tipo: 'Heteroevaluación' }
+      ],
+      minimoAprobatorio: 70
+    },
+    
+    // COMPROBACIÓN
+    comprobacion: {
+      actividades: '1. Aplicar la lista de verificación de requerimientos.\n2. Realizar pruebas de funcionamiento del equipo.\n3. Verificar la distribución del mobiliario y equipo.\n4. Verificar la suficiencia de material conforme al número de participantes.',
+      duracion: 30,
+      tecnicas: 'Lista de verificación de requerimientos',
+      materiales: 'Lista de verificación de requerimientos'
+    },
+    
+    // APERTURA/ENCUADRE
+    apertura: {
+      etapas: [
+        {
+          nombre: 'Presentación del instructor y participantes',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Presentación, Rompehielo',
+          materiales: 'Presentación en PowerPoint, laptop, proyector'
+        },
+        {
+          nombre: 'Presentación del curso',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Expositiva dialogada',
+          materiales: 'Presentación en PowerPoint, laptop, proyector'
+        },
+        {
+          nombre: 'Momentos e instrumentos de evaluación',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Expositiva',
+          materiales: 'Formatos impresos'
+        },
+        {
+          nombre: 'Acuerdos y compromisos',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Técnica grupal',
+          materiales: 'Rotafolio, marcadores, contratos de aprendizaje'
+        },
+        {
+          nombre: 'Evaluación diagnóstica',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Evaluación diagnóstica',
+          materiales: 'Cuestionario diagnóstico, bolígrafos'
         }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      ]
+    },
+    
+    // DESARROLLO
+    desarrollo: {
+      temas: []
+    },
+    
+    // EVALUACIÓN FORMATIVA (Intermedia)
+    evaluacionFormativa: {
+      actividades: 'El instructor indica el alcance y estrategias de la evaluación: sirve para retroalimentar el avance logrado. Se realiza durante la técnica demostrativa. Aclara dudas.',
+      duracion: 0,
+      tecnicas: 'Evaluación formativa (Guía de observación)',
+      materiales: 'Guía de observación, bolígrafos'
+    },
+    
+    // ENERGIZANTE/REACTIVACIÓN
+    energizante: {
+      actividades: '',
+      duracion: 0,
+      tecnicas: 'Técnica energizante',
+      materiales: 'Espacio libre, música opcional'
+    },
+    
+    // CIERRE
+    cierre: {
+      etapas: [
+        {
+          nombre: 'Conclusiones y resumen',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Técnica grupal de cierre',
+          materiales: 'Pizarrón, laptop, proyector'
+        },
+        {
+          nombre: 'Logro de expectativas y objetivos',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Técnica grupal',
+          materiales: 'Rotafolio, marcadores'
+        },
+        {
+          nombre: 'Sugerencias de continuidad y referencias',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Expositiva',
+          materiales: 'Presentación'
+        },
+        {
+          nombre: 'Evaluación de satisfacción',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Evaluación de satisfacción',
+          materiales: 'Formatos impresos, bolígrafos'
+        },
+        {
+          nombre: 'Despedida y agradecimientos',
+          actividades: '',
+          duracion: 0,
+          tecnicas: 'Técnica grupal',
+          materiales: '—'
+        }
+      ]
+    }
+  });
+
+  const generarObjetivoGeneral = () => {
+    const { cognitivo, psicomotor, afectivo, relacional, condicion } = formData.objetivoGeneral;
+    
+    if (!cognitivo || !psicomotor || !afectivo || !relacional || !condicion) {
+      alert('⚠️ Complete todos los campos para generar el objetivo');
+      return;
+    }
+
+    const objetivo = `Al finalizar el curso, el participante ${cognitivo}, ${psicomotor}, ${afectivo} y ${relacional}, ${condicion}`;
+    
+    setFormData(prev => ({
+      ...prev,
+      objetivoGeneral: { ...prev.objetivoGeneral, generado: objetivo }
+    }));
+  };
+
+  const agregarTema = () => {
+    setFormData(prev => ({
+      ...prev,
+      desarrollo: {
+        temas: [...prev.desarrollo.temas, {
+          id: Date.now(),
+          nombre: '',
+          subtemas: '',
+          actividades: '',
+          duracion: 0,
+          tecnicas: '',
+          materiales: ''
+        }]
+      }
+    }));
+  };
+
+  const eliminarTema = (id) => {
+    setFormData(prev => ({
+      ...prev,
+      desarrollo: {
+        temas: prev.desarrollo.temas.filter(t => t.id !== id)
+      }
+    }));
+  };
+
+  const actualizarTema = (id, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      desarrollo: {
+        temas: prev.desarrollo.temas.map(t => 
+          t.id === id ? { ...t, [campo]: valor } : t
+        )
+      }
+    }));
+  };
+
+  const actualizarObjetivoParticular = (index, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      objetivosParticulares: prev.objetivosParticulares.map((obj, idx) =>
+        idx === index ? { ...obj, [campo]: valor } : obj
+      )
+    }));
+  };
+
+  const actualizarEtapaApertura = (index, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      apertura: {
+        etapas: prev.apertura.etapas.map((etapa, idx) =>
+          idx === index ? { ...etapa, [campo]: valor } : etapa
+        )
+      }
+    }));
+  };
+
+  const actualizarEtapaCierre = (index, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      cierre: {
+        etapas: prev.cierre.etapas.map((etapa, idx) =>
+          idx === index ? { ...etapa, [campo]: valor } : etapa
+        )
+      }
+    }));
+  };
+
+  const actualizarEvaluacion = (index, campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      evaluacion: {
+        ...prev.evaluacion,
+        aspectos: prev.evaluacion.aspectos.map((asp, idx) =>
+          idx === index ? { ...asp, [campo]: valor } : asp
+        )
+      }
+    }));
+  };
+
+  const calcularTiempos = () => {
+    const comprobacion = formData.comprobacion.duracion || 0;
+    const apertura = formData.apertura.etapas.reduce((sum, e) => sum + (e.duracion || 0), 0);
+    const desarrollo = formData.desarrollo.temas.reduce((sum, t) => sum + (t.duracion || 0), 0);
+    const formativa = formData.evaluacionFormativa.duracion || 0;
+    const energizante = formData.energizante.duracion || 0;
+    const cierre = formData.cierre.etapas.reduce((sum, e) => sum + (e.duracion || 0), 0);
+    
+    return {
+      comprobacion,
+      apertura,
+      desarrollo,
+      formativa,
+      energizante,
+      cierre,
+      total: apertura + desarrollo + formativa + energizante + cierre,
+      esperado: formData.duracionHoras * 60
+    };
+  };
+
+  const calcularTotalEvaluacion = () => {
+    return formData.evaluacion.aspectos.reduce((sum, asp) => sum + (asp.porcentaje || 0), 0);
+  };
+
+  const guardarBorrador = () => {
+    try {
+      localStorage.setItem('cartaEC0301_v2', JSON.stringify(formData));
+      alert('✅ Borrador guardado correctamente');
+    } catch (e) {
+      alert('❌ Error al guardar: ' + e.message);
+    }
+  };
+
+  const exportarJSON = () => {
+    const blob = new Blob([JSON.stringify(formData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `carta-descriptiva-${formData.nombreCurso || 'sin-nombre'}.json`;
+    a.click();
+  };
+
+  useEffect(() => {
+    const guardado = localStorage.getItem('cartaEC0301_v2');
+    if (guardado) {
+      try {
+        setFormData(JSON.parse(guardado));
+      } catch (e) {
+        console.error('Error al cargar datos');
+      }
+    }
+  }, []);
+
+  const tiempos = calcularTiempos();
+  const totalEvaluacion = calcularTotalEvaluacion();
+  const evaluacionValida = totalEvaluacion === 100;
+  const tiempoValido = tiempos.total === tiempos.esperado;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      {/* HEADER */}
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="flex items-center gap-3">
+            <FileText className="w-10 h-10 text-indigo-600" />
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Carta Descriptiva EC0301</h1>
+              <p className="text-sm text-gray-600">Sistema Completo para Cursos Presenciales</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={guardarBorrador} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+              <Save className="w-4 h-4" /> Guardar
+            </button>
+            <button onClick={exportarJSON} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+              <Download className="w-4 h-4" /> Exportar
+            </button>
+          </div>
+        </div>
+
+        {/* INDICADORES */}
+        <div className="mt-6 grid md:grid-cols-4 gap-4">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border-2 border-blue-200">
+            <p className="text-xs text-blue-700 font-semibold mb-1">TIEMPO DEL CURSO</p>
+            <p className="text-2xl font-bold text-blue-900">{tiempos.total} / {tiempos.esperado} min</p>
+            <p className="text-xs text-blue-600 mt-1">{tiempoValido ? '✓ Completo' : `Faltan ${tiempos.esperado - tiempos.total} min`}</p>
+          </div>
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border-2 border-green-200">
+            <p className="text-xs text-green-700 font-semibold mb-1">EVALUACIÓN</p>
+            <p className="text-2xl font-bold text-green-900">{totalEvaluacion}%</p>
+            <p className="text-xs text-green-600 mt-1">{evaluacionValida ? '✓ Válida (100%)' : '✗ Debe sumar 100%'}</p>
+          </div>
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border-2 border-purple-200">
+            <p className="text-xs text-purple-700 font-semibold mb-1">TEMAS</p>
+            <p className="text-2xl font-bold text-purple-900">{formData.desarrollo.temas.length}</p>
+            <p className="text-xs text-purple-600 mt-1">Módulos del curso</p>
+          </div>
+          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4 border-2 border-orange-200">
+            <p className="text-xs text-orange-700 font-semibold mb-1">OBJETIVOS</p>
+            <p className="text-2xl font-bold text-orange-900">4</p>
+            <p className="text-xs text-orange-600 mt-1">Dimensiones completas</p>
+          </div>
+        </div>
+      </div>
+
+      {/* NAVEGACIÓN */}
+      <div className="bg-white rounded-xl shadow-lg mb-6 overflow-x-auto">
+        <div className="flex gap-1 p-2">
+          {[
+            { id: 'info-general', label: '1. Info General', icon: FileText },
+            { id: 'objetivo-general', label: '2. Objetivo General', icon: Target },
+            { id: 'objetivos-particulares', label: '3. Objetivos Particulares', icon: BookOpen },
+            { id: 'requerimientos', label: '4. Requerimientos', icon: Users },
+            { id: 'evaluacion', label: '5. Evaluación', icon: CheckCircle },
+            { id: 'comprobacion', label: '6. Comprobación', icon: Clock },
+            { id: 'apertura', label: '7. Apertura', icon: Target },
+            { id: 'desarrollo', label: '8. Desarrollo', icon: BookOpen },
+            { id: 'cierre', label: '9. Cierre', icon: CheckCircle }
+          ].map(section => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg font-semibold transition whitespace-nowrap ${
+                activeSection === section.id
+                  ? 'bg-indigo-600 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <section.icon className="w-4 h-4" />
+              {section.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* CONTENIDO */}
+      <div className="space-y-6">
         
-        .section-title {
-            color: var(--primary); font-size: 1.5rem; margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem; border-bottom: 3px solid var(--accent);
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-        
-        label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--primary); }
-        input, textarea, select {
-            width: 100%; padding: 0.875rem; border: 2px solid var(--border); border-radius: 10px;
-            font-size: 0.95rem; transition: all 0.3s ease; background: white;
-        }
-        input:focus, textarea:focus, select:focus {
-            outline: none; border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-        }
-        textarea { min-height: 120px; resize: vertical; font-family: inherit; }
-
-        .dynamic-list { border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-        .list-item {
-            border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
-            background: var(--light); position: relative;
-        }
-        .remove-btn {
-            position: absolute; top: 0.5rem; right: 0.5rem; background: var(--accent);
-            color: white; border: none; border-radius: 50%; width: 30px; height: 30px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-
-        .module-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;
-        }
-        .module-card {
-            background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            text-align: center; transition: transform 0.3s ease;
-        }
-        .module-card:hover { transform: translateY(-5px); }
-        .module-card.disabled { opacity: 0.6; pointer-events: none; }
-        .module-icon { font-size: 3rem; color: var(--accent); margin-bottom: 1rem; }
-        .module-title { font-size: 1.5rem; color: var(--primary); margin-bottom: 1rem; }
-        .module-description { color: var(--muted); margin-bottom: 1.5rem; }
-        .module-status {
-            display: inline-block; padding: 0.25rem 0.75rem; border-radius: 20px;
-            font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem;
-        }
-        .status-pending { background: #FEF3C7; color: #92400E; }
-        .status-ready { background: #D1FAE5; color: #166534; }
-        .status-generated { background: #DBEAFE; color: #1E40AF; }
-    </style>
-</head>
-<body>
-    <header class="header">
-        <div class="container">
-            <div class="header-content">
-                <h1><i class="fa-solid fa-clipboard-list"></i> Carta Descriptiva EC0301</h1>
-                <div class="toolbar">
-                    <button class="btn btn-ai" onclick="generateWithAI()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Asistente IA
-                    </button>
-                    <button class="btn btn-secondary" onclick="saveDraft()">
-                        <i class="fa-solid fa-save"></i> Guardar
-                    </button>
-                    <button class="btn btn-success" onclick="completeDocument()" id="completeBtn" disabled>
-                        <i class="fa-solid fa-check-circle"></i> Completar
-                    </button>
-                </div>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-        </div>
-    </header>
-
-    <main class="container">
-        <!-- INFORMACIÓN GENERAL -->
-        <div class="section">
-            <div class="section-title">
-                <span><i class="fa-solid fa-info-circle"></i> Información General</span>
-            </div>
-            <div class="grid-2">
-                <div>
-                    <label for="nombre">Nombre del Curso*</label>
-                    <input type="text" id="nombre" placeholder="Ej: Diseño de Cursos de Capacitación Presencial" oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="facilitador">Facilitador*</label>
-                    <input type="text" id="facilitador" placeholder="Nombre completo del instructor" oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="lugar">Lugar de Impartición*</label>
-                    <input type="text" id="lugar" placeholder="Dirección o ubicación" oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="duracion">Duración (horas)*</label>
-                    <input type="number" id="duracion" placeholder="20" min="1" max="200" oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="num">Número de Participantes*</label>
-                    <input type="number" id="num" placeholder="15" min="1" max="50" oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="fechas">Fechas de Impartición</label>
-                    <input type="text" id="fechas" placeholder="Del 15 al 19 de Enero 2024">
-                </div>
-            </div>
-            <div style="margin-top: 1.5rem;">
-                <label for="psico">Perfil del Participante*</label>
-                <textarea id="psico" placeholder="Describe el perfil psicopedagógico del participante..." oninput="updateProgress()"></textarea>
-            </div>
-        </div>
-
-        <!-- OBJETIVO GENERAL -->
-        <div class="section">
-            <div class="section-title">
-                <span><i class="fa-solid fa-bullseye"></i> Objetivo General</span>
-                <button class="btn btn-ai" onclick="generateObjetivos()">
-                    <i class="fa-solid fa-robot"></i> Generar IA
-                </button>
-            </div>
-            <div class="grid-3">
-                <div>
-                    <label for="og_accion">Acción (Verbo)*</label>
-                    <input type="text" id="og_accion" placeholder="Diseñar, elaborar, aplicar..." oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="og_condicion">Condición de Operación*</label>
-                    <input type="text" id="og_condicion" placeholder="Con base en metodología..." oninput="updateProgress()">
-                </div>
-                <div>
-                    <label for="og_criterio">Criterio de Evaluación*</label>
-                    <input type="text" id="og_criterio" placeholder="Cumpliendo estándares..." oninput="updateProgress()">
-                </div>
-            </div>
-        </div>
-
-        <!-- OBJETIVOS PARTICULARES -->
-        <div class="section">
-            <div class="section-title">
-                <span><i class="fa-solid fa-list"></i> Objetivos Particulares</span>
-                <button class="btn btn-secondary" onclick="addObjetivo()">
-                    <i class="fa-solid fa-plus"></i> Agregar
-                </button>
-            </div>
-            <div id="objetivos-container" class="dynamic-list">
-                <p style="text-align: center; color: var(--muted); padding: 2rem;">
-                    Haz clic en "Agregar" para incluir objetivos particulares
-                </p>
-            </div>
-        </div>
-
-        <!-- TEMARIO -->
-        <div class="section">
-            <div class="section-title">
-                <span><i class="fa-solid fa-book"></i> Temario de Desarrollo</span>
-                <button class="btn btn-secondary" onclick="addTema()">
-                    <i class="fa-solid fa-plus"></i> Agregar Tema
-                </button>
-            </div>
-            <div id="temas-container" class="dynamic-list">
-                <p style="text-align: center; color: var(--muted); padding: 2rem;">
-                    Haz clic en "Agregar Tema" para estructurar el contenido
-                </p>
-            </div>
-        </div>
-
-        <!-- REQUERIMIENTOS -->
-        <div class="section">
-            <div class="section-title">
-                <span><i class="fa-solid fa-tools"></i> Requerimientos</span>
-            </div>
-            <div class="grid-3">
-                <div>
-                    <label for="rq_inst">Instalaciones*</label>
-                    <textarea id="rq_inst" placeholder="Aula con capacidad para 20 personas..." oninput="updateProgress()"></textarea>
-                </div>
-                <div>
-                    <label for="rq_equipo">Equipo y Mobiliario*</label>
-                    <textarea id="rq_equipo" placeholder="Proyector, laptop, pizarrón..." oninput="updateProgress()"></textarea>
-                </div>
-                <div>
-                    <label for="rq_materiales">Materiales*</label>
-                    <textarea id="rq_materiales" placeholder="Hojas, plumas, folders..." oninput="updateProgress()"></textarea>
-                </div>
-            </div>
-        </div>
-
-        <!-- SISTEMA DE EVALUACIÓN -->
-        <div class="section">
-            <div class="section-title">
-                <span><i class="fa-solid fa-chart-bar"></i> Sistema de Evaluación</span>
-            </div>
-            <div class="grid-2">
-                <div>
-                    <label for="ev_form_pct">Evaluación Formativa (%)*</label>
-                    <input type="number" id="ev_form_pct" value="40" min="0" max="100" oninput="recalcEvaluacion()">
-                </div>
-                <div>
-                    <label for="ev_sum_pct">Evaluación Sumativa (%)*</label>
-                    <input type="number" id="ev_sum_pct" value="60" min="0" max="100" oninput="recalcEvaluacion()">
-                </div>
-                <div>
-                    <label for="ev_form_inst">Instrumento Formativo</label>
-                    <input type="text" id="ev_form_inst" value="Guía de Observación">
-                </div>
-                <div>
-                    <label for="ev_sum_inst">Instrumento Sumativo</label>
-                    <input type="text" id="ev_sum_inst" value="Examen Final">
-                </div>
-                <div>
-                    <label for="ev_min">Calificación Mínima Aprobatoria*</label>
-                    <input type="number" id="ev_min" value="80" min="60" max="90" oninput="updateProgress()">
-                </div>
-                <div>
-                    <label>Total de Evaluación</label>
-                    <input type="text" id="ev_total" value="100%" readonly style="background: var(--light);">
-                </div>
-            </div>
-        </div>
-
-        <!-- MÓDULOS SIGUIENTES -->
-        <div class="section" id="modulosSection" style="display: none;">
-            <div class="section-title">
-                <span><i class="fa-solid fa-layer-group"></i> Módulos del Sistema</span>
-            </div>
-            <div class="module-grid">
-                <div class="module-card" id="logisticaCard" onclick="goToModule('logistica')">
-                    <div class="module-icon"><i class="fa-solid fa-clipboard-list"></i></div>
-                    <div class="module-title">Logística</div>
-                    <div class="module-status status-ready">Listo</div>
-                    <div class="module-description">Lista de asistencia, contrato de aprendizaje y requerimientos</div>
-                    <button class="btn btn-primary">Ir al Módulo</button>
-                </div>
-
-                <div class="module-card disabled" id="evaluacionesCard" onclick="goToModule('evaluaciones')">
-                    <div class="module-icon"><i class="fa-solid fa-file-signature"></i></div>
-                    <div class="module-title">Evaluaciones</div>
-                    <div class="module-status status-pending">Pendiente</div>
-                    <div class="module-description">Instrumentos diagnósticos, formativos, sumativos y de satisfacción</div>
-                    <button class="btn btn-primary">Generar con IA</button>
-                </div>
-
-                <div class="module-card disabled" id="manualesCard" onclick="goToModule('manuales')">
-                    <div class="module-icon"><i class="fa-solid fa-book-open"></i></div>
-                    <div class="module-title">Manuales</div>
-                    <div class="module-status status-pending">Pendiente</div>
-                    <div class="module-description">Manual del participante e instructor</div>
-                    <button class="btn btn-primary">Generar con IA</button>
-                </div>
-
-                <div class="module-card disabled" id="auditoriaCard" onclick="goToModule('auditoria')">
-                    <div class="module-icon"><i class="fa-solid fa-shield-check"></i></div>
-                    <div class="module-title">Auditoría</div>
-                    <div class="module-status status-pending">Pendiente</div>
-                    <div class="module-description">Auditoría de cumplimiento y portafolio ZIP</div>
-                    <button class="btn btn-primary">Auditar</button>
-                </div>
-
-                <div class="module-card disabled" id="resultadosCard" onclick="goToModule('resultados')">
-                    <div class="module-icon"><i class="fa-solid fa-file-excel"></i></div>
-                    <div class="module-title">Resultados</div>
-                    <div class="module-status status-pending">Pendiente</div>
-                    <div class="module-description">Captura de calificaciones y reporte final</div>
-                    <button class="btn btn-primary">Capturar</button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script>
-        let objetivoCounter = 0;
-        let temaCounter = 0;
-
-        // Inicialización
-        document.addEventListener('DOMContentLoaded', () => {
-            loadData();
-            updateProgress();
-        });
-
-        // Guardar datos automáticamente
-        function saveData() {
-            const data = {
-                nombre: document.getElementById('nombre').value,
-                facilitador: document.getElementById('facilitador').value,
-                lugar: document.getElementById('lugar').value,
-                duracion: document.getElementById('duracion').value,
-                num: document.getElementById('num').value,
-                fechas: document.getElementById('fechas').value,
-                psico: document.getElementById('psico').value,
-                og: {
-                    accion: document.getElementById('og_accion').value,
-                    cond: document.getElementById('og_condicion').value,
-                    criterio: document.getElementById('og_criterio').value
-                },
-                objetivos: getObjetivos(),
-                temas: getTemas(),
-                rq: {
-                    inst: document.getElementById('rq_inst').value,
-                    equipo: document.getElementById('rq_equipo').value,
-                    mats: document.getElementById('rq_materiales').value
-                },
-                ev: {
-                    form: { pct: document.getElementById('ev_form_pct').value, inst: document.getElementById('ev_form_inst').value },
-                    sum: { pct: document.getElementById('ev_sum_pct').value + '%', inst: document.getElementById('ev_sum_inst').value },
-                    min: document.getElementById('ev_min').value
-                }
-            };
-
-            EC0301Manager.saveData(data, 'carta_descriptiva');
-            return data;
-        }
-
-        function loadData() {
-            const data = EC0301Manager.getData();
-            if (!data || !data.nombre) return;
-
-            document.getElementById('nombre').value = data.nombre || '';
-            document.getElementById('facilitador').value = data.facilitador || '';
-            document.getElementById('lugar').value = data.lugar || '';
-            document.getElementById('duracion').value = data.duracion || '';
-            document.getElementById('num').value = data.num || '';
-            document.getElementById('fechas').value = data.fechas || '';
-            document.getElementById('psico').value = data.psico || '';
+        {/* 1. INFORMACIÓN GENERAL */}
+        {activeSection === 'info-general' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">1. Información General del Curso</h2>
             
-            if (data.og) {
-                document.getElementById('og_accion').value = data.og.accion || '';
-                document.getElementById('og_condicion').value = data.og.cond || '';
-                document.getElementById('og_criterio').value = data.og.criterio || '';
-            }
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Nombre del Curso-Taller <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.nombreCurso}
+                  onChange={(e) => setFormData({...formData, nombreCurso: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="Ej: Curso de Inducción en PLD y FT"
+                />
+              </div>
 
-            if (data.rq) {
-                document.getElementById('rq_inst').value = data.rq.inst || '';
-                document.getElementById('rq_equipo').value = data.rq.equipo || '';
-                document.getElementById('rq_materiales').value = data.rq.mats || '';
-            }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Nombre del Facilitador/Instructor <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.facilitador}
+                  onChange={(e) => setFormData({...formData, facilitador: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="Nombre completo"
+                />
+              </div>
 
-            if (data.ev) {
-                document.getElementById('ev_form_pct').value = data.ev.form?.pct || '40';
-                document.getElementById('ev_sum_pct').value = data.ev.sum?.pct?.replace('%', '') || '60';
-                document.getElementById('ev_form_inst').value = data.ev.form?.inst || 'Guía de Observación';
-                document.getElementById('ev_sum_inst').value = data.ev.sum?.inst || 'Examen Final';
-                document.getElementById('ev_min').value = data.ev.min || '80';
-            }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Duración (horas) <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.duracionHoras}
+                  onChange={(e) => setFormData({...formData, duracionHoras: parseFloat(e.target.value) || 0})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  min="0.5"
+                  step="0.5"
+                />
+                <p className="text-xs text-gray-500 mt-1">= {formData.duracionHoras * 60} minutos</p>
+              </div>
 
-            // Cargar objetivos y temas
-            loadObjetivos(data.objetivos || []);
-            loadTemas(data.temas || []);
-        }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Fecha(s) <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.fechas}
+                  onChange={(e) => setFormData({...formData, fechas: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="Ej: 17 julio 2025"
+                />
+              </div>
 
-        function saveDraft() {
-            try {
-                saveData();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Guardado',
-                    text: 'Los datos se han guardado correctamente',
-                    timer: 2000,
-                    timerProgressBar: true
-                });
-            } catch (error) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: error.message
-                });
-            }
-        }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Número de Participantes <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="number"
+                  value={formData.numeroParticipantes}
+                  onChange={(e) => setFormData({...formData, numeroParticipantes: parseInt(e.target.value) || 0})}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  min="1"
+                />
+              </div>
+            </div>
 
-        function updateProgress() {
-            const requiredFields = [
-                'nombre', 'facilitador', 'lugar', 'duracion', 'num', 'psico',
-                'og_accion', 'og_condicion', 'og_criterio',
-                'rq_inst', 'rq_equipo', 'rq_materiales', 'ev_min'
-            ];
+            <div className="mt-6">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Lugar de Instrucción <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                value={formData.lugarInstruccion}
+                onChange={(e) => setFormData({...formData, lugarInstruccion: e.target.value})}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                rows="3"
+                placeholder="Salón, Hotel, Dirección completa..."
+              />
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Perfil del Participante <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                value={formData.perfilParticipante}
+                onChange={(e) => setFormData({...formData, perfilParticipante: e.target.value})}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                rows="5"
+                placeholder="Nivel educativo, experiencia previa, conocimientos, actitudes..."
+              />
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Propósito/Beneficio del Curso <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                value={formData.proposito}
+                onChange={(e) => setFormData({...formData, proposito: e.target.value})}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                rows="5"
+                placeholder="Describa el propósito y beneficios del curso..."
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 2. OBJETIVO GENERAL */}
+        {activeSection === 'objetivo-general' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">2. Objetivo General (4 Dimensiones Integradas)</h2>
             
-            let completed = 0;
-            requiredFields.forEach(field => {
-                const element = document.getElementById(field);
-                if (element && element.value.trim()) completed++;
-            });
+            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg mb-6">
+              <p className="text-sm font-semibold text-blue-900 mb-2">📘 Estructura del Objetivo General:</p>
+              <p className="text-sm text-blue-800">
+                <strong>Sujeto (fijo):</strong> "Al finalizar el curso, el participante"<br/>
+                <strong>Acción integrada:</strong> [Cognitivo] + [Psicomotor] + [Afectivo] + [Relacional]<br/>
+                <strong>Condición:</strong> Contexto y finalidad
+              </p>
+            </div>
 
-            // Verificar que tenga al menos un objetivo y un tema
-            const objetivos = getObjetivos();
-            const temas = getTemas();
-            if (objetivos.length > 0) completed += 2;
-            if (temas.length > 0) completed += 2;
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  🧠 Dimensión Cognitiva <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.objetivoGeneral.cognitivo}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    objetivoGeneral: { ...formData.objetivoGeneral, cognitivo: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="identificará y describirá las principales normativas..."
+                />
+              </div>
 
-            const progress = Math.round((completed / (requiredFields.length + 4)) * 100);
-            document.getElementById('progressFill').style.width = progress + '%';
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  ✋ Dimensión Psicomotora <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.objetivoGeneral.psicomotor}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    objetivoGeneral: { ...formData.objetivoGeneral, psicomotor: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="aplicará correctamente los procedimientos..."
+                />
+              </div>
 
-            // Habilitar botón de completar si está al 90% o más
-            const completeBtn = document.getElementById('completeBtn');
-            if (progress >= 90) {
-                completeBtn.disabled = false;
-                completeBtn.textContent = 'Completar Carta Descriptiva';
-            } else {
-                completeBtn.disabled = true;
-                completeBtn.textContent = `Completar (${progress}%)`;
-            }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  ❤️ Dimensión Afectiva <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.objetivoGeneral.afectivo}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    objetivoGeneral: { ...formData.objetivoGeneral, afectivo: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="asumirá una actitud proactiva y ética..."
+                />
+              </div>
 
-            return progress;
-        }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  🤝 Dimensión Relacional <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.objetivoGeneral.relacional}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    objetivoGeneral: { ...formData.objetivoGeneral, relacional: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  placeholder="colaborará en equipo para identificar riesgos..."
+                />
+              </div>
 
-        function recalcEvaluacion() {
-            const form = parseInt(document.getElementById('ev_form_pct').value) || 0;
-            const sum = parseInt(document.getElementById('ev_sum_pct').value) || 0;
-            const total = form + sum;
-            
-            document.getElementById('ev_total').value = total + '%';
-            
-            if (total !== 100) {
-                document.getElementById('ev_total').style.color = 'red';
-            } else {
-                document.getElementById('ev_total').style.color = 'green';
-            }
-        }
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  📋 Condición de Operación <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.objetivoGeneral.condicion}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    objetivoGeneral: { ...formData.objetivoGeneral, condicion: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="4"
+                  placeholder="aplicando estos conocimientos a casos prácticos, con el propósito de fortalecer la cultura de cumplimiento y reducir riesgos institucionales"
+                />
+              </div>
 
-        function addObjetivo() {
-            objetivoCounter++;
-            const container = document.getElementById('objetivos-container');
-            if (container.children.length === 1 && container.children[0].tagName === 'P') {
-                container.innerHTML = '';
-            }
+              <button
+                onClick={generarObjetivoGeneral}
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-lg font-bold text-lg hover:from-indigo-700 hover:to-purple-700 transition flex items-center justify-center gap-3"
+              >
+                <CheckCircle className="w-6 h-6" />
+                Generar Objetivo General Completo
+              </button>
 
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.innerHTML = `
-                <button class="remove-btn" onclick="removeElement(this.parentElement)">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-                <div class="grid-2">
-                    <div>
-                        <label>Dominio</label>
-                        <select name="obj_dominio">
-                            <option value="cognitivo">Cognitivo</option>
-                            <option value="psicomotriz">Psicomotriz</option>
-                            <option value="afectivo">Afectivo</option>
+              {formData.objetivoGeneral.generado && (
+                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border-l-4 border-indigo-600 p-6 rounded-lg">
+                  <p className="text-sm font-bold text-indigo-900 mb-3">✨ OBJETIVO GENERAL GENERADO:</p>
+                  <p className="text-gray-900 leading-relaxed text-lg italic font-medium">{formData.objetivoGeneral.generado}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 3. OBJETIVOS PARTICULARES */}
+        {activeSection === 'objetivos-particulares' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">3. Objetivos Particulares (4 Dimensiones)</h2>
+
+            {formData.objetivosParticulares.map((obj, idx) => (
+              <div key={idx} className="mb-6 border-2 border-gray-200 rounded-xl p-6 bg-gradient-to-br from-gray-50 to-white">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl ${
+                    obj.dimension === 'COGNITIVO' ? 'bg-blue-600' :
+                    obj.dimension === 'PSICOMOTOR' ? 'bg-green-600' :
+                    obj.dimension === 'AFECTIVO' ? 'bg-yellow-600' : 'bg-purple-600'
+                  }`}>
+                    {idx + 1}
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">{obj.dimension}</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Sujeto (predefinido)
+                    </label>
+                    <input
+                      type="text"
+                      value={obj.sujeto}
+                      disabled
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-100 text-gray-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Acción o comportamiento <span className="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      value={obj.accion}
+                      onChange={(e) => actualizarObjetivoParticular(idx, 'accion', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="3"
+                      placeholder={
+                        obj.dimension === 'COGNITIVO' ? 'Al finalizar el curso, identificará y explicará las principales normativas...' :
+                        obj.dimension === 'PSICOMOTOR' ? 'Al finalizar el curso, aplicará correctamente los procedimientos...' :
+                        obj.dimension === 'AFECTIVO' ? 'Al finalizar el curso, asumirá una actitud proactiva y ética...' :
+                        'Durante el curso, colaborará en equipo para identificar señales de alerta...'
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Condición de operación <span className="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      value={obj.condicion}
+                      onChange={(e) => actualizarObjetivoParticular(idx, 'condicion', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="3"
+                      placeholder="A través de... mediante... con la finalidad de..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Temas <span className="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      value={obj.temas}
+                      onChange={(e) => actualizarObjetivoParticular(idx, 'temas', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="3"
+                      placeholder="- Tema 1&#10;- Tema 2&#10;- Tema 3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Tiempo estimado (minutos)
+                    </label>
+                    <input
+                      type="number"
+                      value={obj.tiempo}
+                      onChange={(e) => actualizarObjetivoParticular(idx, 'tiempo', parseInt(e.target.value) || 0)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 4. REQUERIMIENTOS */}
+        {activeSection === 'requerimientos' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">4. Requerimientos (Estructura EC0301)</h2>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Requerimientos en instalaciones, mobiliario y su distribución <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.requerimientos.instalaciones}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    requerimientos: { ...formData.requerimientos, instalaciones: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="5"
+                  placeholder="Ej: Salón para 5 personas, mesas, sillas, ventilación, iluminación, distribución en U..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Requerimientos en equipo de apoyo y su distribución <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.requerimientos.equipo}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    requerimientos: { ...formData.requerimientos, equipo: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="5"
+                  placeholder="Ej: Laptop, proyector, pantalla, bocina, pizarrón, marcadores, extensión..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Requerimientos en materiales de apoyo <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.requerimientos.materiales}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    requerimientos: { ...formData.requerimientos, materiales: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="6"
+                  placeholder="Ej: Formatos de evaluación, manuales, contratos, lista de asistencia..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Requerimientos humanos <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.requerimientos.humanos}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    requerimientos: { ...formData.requerimientos, humanos: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="3"
+                  placeholder="Ej: Instructor certificado, personal de apoyo logístico..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Material y equipo para las medidas de salud/seguridad/higiene/protección civil <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.requerimientos.saludSeguridad}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    requerimientos: { ...formData.requerimientos, saludSeguridad: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="5"
+                  placeholder="Ej: Gel antibacterial, aerosol desinfectante, botiquín, señalización, extintor..."
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. EVALUACIÓN */}
+        {activeSection === 'evaluacion' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">5. Sistema de Evaluación</h2>
+
+            <div className="bg-amber-50 border-l-4 border-amber-600 p-4 rounded-lg mb-6">
+              <p className="text-sm font-bold text-amber-900">
+                ⚠️ Total actual: {totalEvaluacion}% {evaluacionValida ? '✅ VÁLIDO' : '❌ DEBE SUMAR 100%'}
+              </p>
+              <p className="text-xs text-amber-800 mt-1">
+                Si el participante cumple con al menos el {formData.evaluacion.minimoAprobatorio}% de la calificación total, se considerará aprobado.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-gray-700 mb-2">
+                Calificación Mínima Aprobatoria (%)
+              </label>
+              <select
+                value={formData.evaluacion.minimoAprobatorio}
+                onChange={(e) => setFormData({
+                  ...formData,
+                  evaluacion: { ...formData.evaluacion, minimoAprobatorio: parseInt(e.target.value) }
+                })}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+              >
+                <option value="60">60%</option>
+                <option value="70">70%</option>
+                <option value="80">80%</option>
+                <option value="90">90%</option>
+              </select>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-indigo-600 text-white">
+                    <th className="border border-indigo-700 px-4 py-3 text-left">Aspecto por evaluar</th>
+                    <th className="border border-indigo-700 px-4 py-3 text-center">Porcentaje</th>
+                    <th className="border border-indigo-700 px-4 py-3 text-left">Instrumento de evaluación</th>
+                    <th className="border border-indigo-700 px-4 py-3 text-left">Momento de aplicación</th>
+                    <th className="border border-indigo-700 px-4 py-3 text-left">Tipo de evaluación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {formData.evaluacion.aspectos.map((asp, idx) => (
+                    <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                      <td className="border border-gray-300 px-4 py-3 font-semibold">{asp.aspecto}</td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <input
+                          type="number"
+                          value={asp.porcentaje}
+                          onChange={(e) => actualizarEvaluacion(idx, 'porcentaje', parseInt(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none text-center"
+                          min="0"
+                          max="100"
+                        />
+                      </td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <input
+                          type="text"
+                          value={asp.instrumento}
+                          onChange={(e) => actualizarEvaluacion(idx, 'instrumento', e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        />
+                      </td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <input
+                          type="text"
+                          value={asp.momento}
+                          onChange={(e) => actualizarEvaluacion(idx, 'momento', e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        />
+                      </td>
+                      <td className="border border-gray-300 px-4 py-3">
+                        <select
+                          value={asp.tipo}
+                          onChange={(e) => actualizarEvaluacion(idx, 'tipo', e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        >
+                          <option value="Heteroevaluación">Heteroevaluación</option>
+                          <option value="Autoevaluación">Autoevaluación</option>
+                          <option value="Coevaluación">Coevaluación</option>
                         </select>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* 6. COMPROBACIÓN */}
+        {activeSection === 'comprobacion' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">6. Comprobación de Recursos (Previo al curso)</h2>
+
+            <div className="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-lg mb-6">
+              <p className="text-sm font-semibold text-blue-900">
+                ℹ️ Esta etapa se realiza {formData.comprobacion.duracion} minutos previos al inicio del curso
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Actividades <span className="text-red-600">*</span>
+                </label>
+                <textarea
+                  value={formData.comprobacion.actividades}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    comprobacion: { ...formData.comprobacion, actividades: e.target.value }
+                  })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  rows="6"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Duración (min)</label>
+                  <input
+                    type="number"
+                    value={formData.comprobacion.duracion}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      comprobacion: { ...formData.comprobacion, duracion: parseInt(e.target.value) || 0 }
+                    })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Técnicas Grupales/Instruccionales</label>
+                  <input
+                    type="text"
+                    value={formData.comprobacion.tecnicas}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      comprobacion: { ...formData.comprobacion, tecnicas: e.target.value }
+                    })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Material y Equipo de Apoyo</label>
+                  <input
+                    type="text"
+                    value={formData.comprobacion.materiales}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      comprobacion: { ...formData.comprobacion, materiales: e.target.value }
+                    })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 7. APERTURA */}
+        {activeSection === 'apertura' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">7. Apertura/Encuadre del Curso</h2>
+
+            <div className="bg-green-50 border-l-4 border-green-600 p-4 rounded-lg mb-6">
+              <p className="text-sm font-semibold text-green-900">
+                ⏱️ Total de tiempo de apertura: {tiempos.apertura} minutos
+              </p>
+            </div>
+
+            {formData.apertura.etapas.map((etapa, idx) => (
+              <div key={idx} className="mb-6 border-2 border-gray-200 rounded-xl p-5 bg-gray-50">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="bg-indigo-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">
+                    {idx + 1}
+                  </span>
+                  {etapa.nombre}
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Actividades</label>
+                    <textarea
+                      value={etapa.actividades}
+                      onChange={(e) => actualizarEtapaApertura(idx, 'actividades', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="4"
+                      placeholder="Describa las actividades de esta etapa..."
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Duración (min)</label>
+                      <input
+                        type="number"
+                        value={etapa.duracion}
+                        onChange={(e) => actualizarEtapaApertura(idx, 'duracion', parseInt(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        min="0"
+                      />
                     </div>
                     <div>
-                        <label>Acción (Verbo de Bloom)</label>
-                        <input type="text" name="obj_accion" placeholder="Identificar, aplicar, analizar...">
-                    </div>
-                </div>
-                <div style="margin-top: 1rem;">
-                    <label>Condición y Criterio</label>
-                    <textarea name="obj_descripcion" placeholder="Descripción completa del objetivo particular..."></textarea>
-                </div>
-            `;
-            container.appendChild(div);
-        }
-
-        function addTema() {
-            temaCounter++;
-            const container = document.getElementById('temas-container');
-            if (container.children.length === 1 && container.children[0].tagName === 'P') {
-                container.innerHTML = '';
-            }
-
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.innerHTML = `
-                <button class="remove-btn" onclick="removeElement(this.parentElement)">
-                    <i class="fa-solid fa-times"></i>
-                </button>
-                <div class="grid-2">
-                    <div>
-                        <label>Nombre del Tema</label>
-                        <input type="text" name="tema_nombre" placeholder="Ej: Fundamentos del diseño instruccional">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Técnicas</label>
+                      <input
+                        type="text"
+                        value={etapa.tecnicas}
+                        onChange={(e) => actualizarEtapaApertura(idx, 'tecnicas', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      />
                     </div>
                     <div>
-                        <label>Duración (minutos)</label>
-                        <input type="number" name="tema_duracion" placeholder="60" min="15" max="480">
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Material y Equipo</label>
+                      <input
+                        type="text"
+                        value={etapa.materiales}
+                        onChange={(e) => actualizarEtapaApertura(idx, 'materiales', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      />
                     </div>
+                  </div>
                 </div>
-                <div style="margin-top: 1rem;">
-                    <label>Descripción del Contenido</label>
-                    <textarea name="tema_contenido" placeholder="Breve descripción del contenido a desarrollar..."></textarea>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 8. DESARROLLO */}
+        {activeSection === 'desarrollo' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">8. Desarrollo del Curso (Temas/Módulos)</h2>
+              <button
+                onClick={agregarTema}
+                className="flex items-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-semibold"
+              >
+                <Plus className="w-5 h-5" /> Agregar Tema
+              </button>
+            </div>
+
+            <div className="bg-purple-50 border-l-4 border-purple-600 p-4 rounded-lg mb-6">
+              <p className="text-sm font-semibold text-purple-900">
+                📚 Total de tiempo de desarrollo: {tiempos.desarrollo} minutos
+              </p>
+            </div>
+
+            {formData.desarrollo.temas.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <BookOpen className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-semibold">No hay temas agregados</p>
+                <p className="text-sm mt-2">Haz clic en "Agregar Tema" para comenzar</p>
+              </div>
+            )}
+
+            {formData.desarrollo.temas.map((tema, idx) => (
+              <div key={tema.id} className="mb-6 border-2 border-gray-200 rounded-xl p-5 bg-gradient-to-br from-blue-50 to-white">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">Tema/Módulo {idx + 1}</h3>
+                  <button
+                    onClick={() => eliminarTema(tema.id)}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                  >
+                    <Trash2 className="w-4 h-4" /> Eliminar
+                  </button>
                 </div>
-            `;
-            container.appendChild(div);
-        }
 
-        function removeElement(element) {
-            element.remove();
-            updateProgress();
-        }
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Nombre del Tema</label>
+                    <input
+                      type="text"
+                      value={tema.nombre}
+                      onChange={(e) => actualizarTema(tema.id, 'nombre', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      placeholder="Ej: Introducción a la PLD/FT y marco normativo"
+                    />
+                  </div>
 
-        function getObjetivos() {
-            const objetivos = [];
-            document.querySelectorAll('#objetivos-container .list-item').forEach(item => {
-                objetivos.push({
-                    dominio: item.querySelector('[name="obj_dominio"]').value,
-                    accion: item.querySelector('[name="obj_accion"]').value,
-                    descripcion: item.querySelector('[name="obj_descripcion"]').value
-                });
-            });
-            return objetivos;
-        }
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Subtemas</label>
+                    <textarea
+                      value={tema.subtemas}
+                      onChange={(e) => actualizarTema(tema.id, 'subtemas', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="3"
+                      placeholder="- Conceptos básicos&#10;- Importancia y riesgos&#10;- Principales leyes y autoridades"
+                    />
+                  </div>
 
-        function getTemas() {
-            const temas = [];
-            document.querySelectorAll('#temas-container .list-item').forEach(item => {
-                temas.push({
-                    nombre: item.querySelector('[name="tema_nombre"]').value,
-                    duracion: item.querySelector('[name="tema_duracion"]').value,
-                    contenido: item.querySelector('[name="tema_contenido"]').value
-                });
-            });
-            return temas;
-        }
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Actividades</label>
+                    <textarea
+                      value={tema.actividades}
+                      onChange={(e) => actualizarTema(tema.id, 'actividades', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="5"
+                      placeholder="Describa las actividades de aprendizaje..."
+                    />
+                  </div>
 
-        function loadObjetivos(objetivos) {
-            const container = document.getElementById('objetivos-container');
-            container.innerHTML = '';
-            
-            objetivos.forEach(obj => {
-                addObjetivo();
-                const lastItem = container.lastElementChild;
-                lastItem.querySelector('[name="obj_dominio"]').value = obj.dominio || 'cognitivo';
-                lastItem.querySelector('[name="obj_accion"]').value = obj.accion || '';
-                lastItem.querySelector('[name="obj_descripcion"]').value = obj.descripcion || '';
-            });
-
-            if (objetivos.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 2rem;">Haz clic en "Agregar" para incluir objetivos particulares</p>';
-            }
-        }
-
-        function loadTemas(temas) {
-            const container = document.getElementById('temas-container');
-            container.innerHTML = '';
-            
-            temas.forEach(tema => {
-                addTema();
-                const lastItem = container.lastElementChild;
-                lastItem.querySelector('[name="tema_nombre"]').value = tema.nombre || '';
-                lastItem.querySelector('[name="tema_duracion"]').value = tema.duracion || '';
-                lastItem.querySelector('[name="tema_contenido"]').value = tema.contenido || '';
-            });
-
-            if (temas.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: var(--muted); padding: 2rem;">Haz clic en "Agregar Tema" para estructurar el contenido</p>';
-            }
-        }
-
-        function generateWithAI() {
-            Swal.fire({
-                title: 'Asistente de IA',
-                html: `
-                    <div style="text-align: left;">
-                        <h4>¿Qué deseas generar?</h4>
-                        <div style="margin: 1rem 0;">
-                            <label><input type="radio" name="aiOption" value="objetivos"> Objetivo General y Particulares</label><br>
-                            <label><input type="radio" name="aiOption" value="temario"> Temario basado en objetivos</label><br>
-                            <label><input type="radio" name="aiOption" value="requerimientos"> Requerimientos técnicos</label><br>
-                            <label><input type="radio" name="aiOption" value="todo"> Completar documento automáticamente</label>
-                        </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Duración (min)</label>
+                      <input
+                        type="number"
+                        value={tema.duracion}
+                        onChange={(e) => actualizarTema(tema.id, 'duracion', parseInt(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        min="0"
+                      />
                     </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'Generar',
-                cancelButtonText: 'Cancelar',
-                preConfirm: () => {
-                    const selected = document.querySelector('input[name="aiOption"]:checked');
-                    if (!selected) {
-                        Swal.showValidationMessage('Selecciona una opción');
-                        return false;
-                    }
-                    return selected.value;
-                }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    generateContent(result.value);
-                }
-            });
-        }
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Técnicas Grupales/Instruccionales</label>
+                      <input
+                        type="text"
+                        value={tema.tecnicas}
+                        onChange={(e) => actualizarTema(tema.id, 'tecnicas', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        placeholder="Ej: Expositiva dialogada"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Material y Equipo de Apoyo</label>
+                      <input
+                        type="text"
+                        value={tema.materiales}
+                        onChange={(e) => actualizarTema(tema.id, 'materiales', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        placeholder="Ej: PowerPoint, laptop, proyector"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
 
-        function generateContent(type) {
-            Swal.fire({
-                title: 'Generando contenido con IA...',
-                text: 'Por favor espera mientras procesamos tu solicitud',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
+            {/* EVALUACIÓN FORMATIVA */}
+            <div className="mt-8 border-2 border-yellow-400 rounded-xl p-5 bg-gradient-to-br from-yellow-50 to-white">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <CheckCircle className="w-6 h-6 text-yellow-600" />
+                Evaluación Formativa (Intermedia)
+              </h3>
 
-            // Simular generación de IA
-            setTimeout(() => {
-                switch(type) {
-                    case 'objetivos':
-                        generateObjetivos();
-                        break;
-                    case 'temario':
-                        generateTemario();
-                        break;
-                    case 'requerimientos':
-                        generateRequerimientos();
-                        break;
-                    case 'todo':
-                        generateAll();
-                        break;
-                }
-            }, 2000);
-        }
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Actividades</label>
+                  <textarea
+                    value={formData.evaluacionFormativa.actividades}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      evaluacionFormativa: { ...formData.evaluacionFormativa, actividades: e.target.value }
+                    })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    rows="4"
+                  />
+                </div>
 
-        function generateObjetivos() {
-            const curso = document.getElementById('nombre').value;
-            if (!curso) {
-                Swal.fire('Error', 'Primero define el nombre del curso', 'error');
-                return;
-            }
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Duración (min)</label>
+                    <input
+                      type="number"
+                      value={formData.evaluacionFormativa.duracion}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        evaluacionFormativa: { ...formData.evaluacionFormativa, duracion: parseInt(e.target.value) || 0 }
+                      })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Técnicas</label>
+                    <input
+                      type="text"
+                      value={formData.evaluacionFormativa.tecnicas}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        evaluacionFormativa: { ...formData.evaluacionFormativa, tecnicas: e.target.value }
+                      })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Material y Equipo</label>
+                    <input
+                      type="text"
+                      value={formData.evaluacionFormativa.materiales}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        evaluacionFormativa: { ...formData.evaluacionFormativa, materiales: e.target.value }
+                      })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
-            // Simulación de generación por IA
-            document.getElementById('og_accion').value = 'Diseñar';
-            document.getElementById('og_condicion').value = 'con base en metodología sistémica y andragógica';
-            document.getElementById('og_criterio').value = 'cumpliendo con estándares de calidad EC0301';
+            {/* ENERGIZANTE/REACTIVACIÓN */}
+            <div className="mt-6 border-2 border-orange-400 rounded-xl p-5 bg-gradient-to-br from-orange-50 to-white">
+              <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <AlertCircle className="w-6 h-6 text-orange-600" />
+                Energizante / Reactivación
+              </h3>
 
-            Swal.fire('Generado', 'Objetivo general creado con IA. Revisa y ajusta según necesidades.', 'success');
-        }
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Actividades</label>
+                  <textarea
+                    value={formData.energizante.actividades}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      energizante: { ...formData.energizante, actividades: e.target.value }
+                    })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    rows="3"
+                    placeholder="Ej: Técnica 'Jumping Compliance': los participantes se mueven y comparten conceptos clave..."
+                  />
+                </div>
 
-        function generateTemario() {
-            // Lógica similar para temario
-            Swal.fire('En desarrollo', 'Esta funcionalidad se completará en la siguiente versión', 'info');
-        }
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Duración (min)</label>
+                    <input
+                      type="number"
+                      value={formData.energizante.duracion}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        energizante: { ...formData.energizante, duracion: parseInt(e.target.value) || 0 }
+                      })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Técnicas</label>
+                    <input
+                      type="text"
+                      value={formData.energizante.tecnicas}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        energizante: { ...formData.energizante, tecnicas: e.target.value }
+                      })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Material y Equipo</label>
+                    <input
+                      type="text"
+                      value={formData.energizante.materiales}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        energizante: { ...formData.energizante, materiales: e.target.value }
+                      })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        function generateRequerimientos() {
-            document.getElementById('rq_inst').value = 'Aula con capacidad para ' + (document.getElementById('num').value || '20') + ' personas, iluminación adecuada, ventilación';
-            document.getElementById('rq_equipo').value = 'Proyector, laptop, pizarrón, mesas y sillas';
-            document.getElementById('rq_materiales').value = 'Hojas blancas, plumas, folders, marcadores';
-            
-            Swal.fire('Generado', 'Requerimientos básicos generados. Personaliza según necesidades específicas.', 'success');
-        }
+        {/* 9. CIERRE */}
+        {activeSection === 'cierre' && (
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">9. Cierre del Curso</h2>
 
-        function generateAll() {
-            generateObjetivos();
-            generateRequerimientos();
-            Swal.fire('Parcialmente generado', 'Se han completado algunos campos. Continúa personalizando el contenido.', 'info');
-        }
+            <div className="bg-red-50 border-l-4 border-red-600 p-4 rounded-lg mb-6">
+              <p className="text-sm font-semibold text-red-900">
+                🏁 Total de tiempo de cierre: {tiempos.cierre} minutos
+              </p>
+            </div>
 
-        function completeDocument() {
-            const progress = updateProgress();
-            if (progress < 90) {
-                Swal.fire('Documento incompleto', 'Completa al menos 90% de los campos requeridos', 'warning');
-                return;
-            }
+            {formData.cierre.etapas.map((etapa, idx) => (
+              <div key={idx} className="mb-6 border-2 border-gray-200 rounded-xl p-5 bg-gray-50">
+                <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <span className="bg-red-600 text-white w-8 h-8 rounded-full flex items-center justify-center text-sm">
+                    {idx + 1}
+                  </span>
+                  {etapa.nombre}
+                </h3>
 
-            Swal.fire({
-                title: '¿Completar Carta Descriptiva?',
-                text: 'Esto activará los módulos siguientes. ¿Continuar?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Sí, completar',
-                cancelButtonText: 'Cancelar'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    saveData();
-                    activateModules();
-                    Swal.fire('Completado', 'Carta descriptiva completada. Los módulos están ahora disponibles.', 'success');
-                }
-            });
-        }
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Actividades</label>
+                    <textarea
+                      value={etapa.actividades}
+                      onChange={(e) => actualizarEtapaCierre(idx, 'actividades', e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      rows="4"
+                      placeholder="Describa las actividades de esta etapa..."
+                    />
+                  </div>
 
-        function activateModules() {
-            document.getElementById('modulosSection').style.display = 'block';
-            
-            // Activar módulos progresivamente
-            setTimeout(() => {
-                document.getElementById('logisticaCard').classList.remove('disabled');
-                document.getElementById('logisticaCard').querySelector('.module-status').textContent = 'Listo';
-                document.getElementById('logisticaCard').querySelector('.module-status').className = 'module-status status-ready';
-            }, 500);
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Duración (min)</label>
+                      <input
+                        type="number"
+                        value={etapa.duracion}
+                        onChange={(e) => actualizarEtapaCierre(idx, 'duracion', parseInt(e.target.value) || 0)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Técnicas</label>
+                      <input
+                        type="text"
+                        value={etapa.tecnicas}
+                        onChange={(e) => actualizarEtapaCierre(idx, 'tecnicas', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 mb-2">Material y Equipo</label>
+                      <input
+                        type="text"
+                        value={etapa.materiales}
+                        onChange={(e) => actualizarEtapaCierre(idx, 'materiales', e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-600 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-            setTimeout(() => {
-                document.getElementById('evaluacionesCard').classList.remove('disabled');
-                document.getElementById('evaluacionesCard').querySelector('.module-status').textContent = 'Listo';
-                document.getElementById('evaluacionesCard').querySelector('.module-status').className = 'module-status status-ready';
-            }, 1000);
+      {/* RESUMEN FINAL */}
+      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl shadow-xl p-8 mt-8">
+        <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+          <CheckCircle className="w-8 h-8" />
+          Resumen de Validación
+        </h2>
 
-            setTimeout(() => {
-                document.getElementById('manualesCard').classList.remove('disabled');
-                document.getElementById('manualesCard').querySelector('.module-status').textContent = 'Listo';
-                document.getElementById('manualesCard').querySelector('.module-status').className = 'module-status status-ready';
-            }, 1500);
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white bg-opacity-20 backdrop-blur rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-4">⏱️ Distribución de Tiempos</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Comprobación:</span>
+                <span className="font-bold">{tiempos.comprobacion} min</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Apertura:</span>
+                <span className="font-bold">{tiempos.apertura} min</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Desarrollo:</span>
+                <span className="font-bold">{tiempos.desarrollo} min</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Eval. Formativa:</span>
+                <span className="font-bold">{tiempos.formativa} min</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Energizante:</span>
+                <span className="font-bold">{tiempos.energizante} min</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Cierre:</span>
+                <span className="font-bold">{tiempos.cierre} min</span>
+              </div>
+              <div className="border-t-2 border-white border-opacity-40 pt-2 mt-2">
+                <div className="flex justify-between text-lg font-bold">
+                  <span>TOTAL:</span>
+                  <span>{tiempos.total} / {tiempos.esperado} min</span>
+                </div>
+                {tiempoValido ? (
+                  <p className="text-xs mt-1 text-green-200">✓ Tiempo exacto cumplido</p>
+                ) : (
+                  <p className="text-xs mt-1 text-yellow-200">⚠️ Ajustar: {tiempos.total > tiempos.esperado ? 'Reducir' : 'Aumentar'} {Math.abs(tiempos.total - tiempos.esperado)} minutos</p>
+                )}
+              </div>
+            </div>
+          </div>
 
-            setTimeout(() => {
-                document.getElementById('auditoriaCard').classList.remove('disabled');
-                document.getElementById('auditoriaCard').querySelector('.module-status').textContent = 'Listo';
-                document.getElementById('auditoriaCard').querySelector('.module-status').className = 'module-status status-ready';
-            }, 2000);
+          <div className="bg-white bg-opacity-20 backdrop-blur rounded-xl p-6">
+            <h3 className="text-lg font-bold mb-4">📊 Sistema de Evaluación</h3>
+            <div className="space-y-2 text-sm">
+              {formData.evaluacion.aspectos.map((asp, idx) => (
+                <div key={idx} className="flex justify-between">
+                  <span className="truncate mr-2">{asp.aspecto.split(' ')[1]}:</span>
+                  <span className="font-bold">{asp.porcentaje}%</span>
+                </div>
+              ))}
+              <div className="border-t-2 border-white border-opacity-40 pt-2 mt-2">
+                <div className="flex justify-between text-lg font-bold">
+                  <span>TOTAL:</span>
+                  <span>{totalEvaluacion}%</span>
+                </div>
+                {evaluacionValida ? (
+                  <p className="text-xs mt-1 text-green-200">✓ Suma correcta (100%)</p>
+                ) : (
+                  <p className="text-xs mt-1 text-red-200">✗ Debe sumar exactamente 100%</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
 
-            setTimeout(() => {
-                document.getElementById('resultadosCard').classList.remove('disabled');
-                document.getElementById('resultadosCard').querySelector('.module-status').textContent = 'Listo';
-                document.getElementById('resultadosCard').querySelector('.module-status').className = 'module-status status-ready';
-            }, 2500);
+        <div className="bg-white bg-opacity-20 backdrop-blur rounded-xl p-6">
+          <h3 className="text-lg font-bold mb-4">✅ Lista de Verificación</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center gap-3">
+              {formData.nombreCurso ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Información General Completa</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {formData.objetivoGeneral.generado ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Objetivo General Generado</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {formData.objetivosParticulares.every(o => o.accion && o.condicion) ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>4 Objetivos Particulares</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {formData.requerimientos.instalaciones ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Requerimientos Definidos</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {evaluacionValida ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Evaluación Válida (100%)</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {formData.desarrollo.temas.length > 0 ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Temas del Desarrollo</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {tiempos.apertura > 0 ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Apertura con Tiempos</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {tiempos.cierre > 0 ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Cierre con Tiempos</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {tiempoValido ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Tiempo Total Exacto</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {formData.evaluacionFormativa.duracion > 0 ? <CheckCircle className="w-5 h-5 text-green-300" /> : <AlertCircle className="w-5 h-5 text-red-300" />}
+              <span>Evaluación Formativa</span>
+            </div>
+          </div>
+        </div>
 
-            // Scroll suave hacia los módulos
-            document.getElementById('modulosSection').scrollIntoView({ behavior: 'smooth' });
-        }
+        <div className="mt-8 bg-white bg-opacity-20 backdrop-blur rounded-xl p-6">
+          <h3 className="text-lg font-bold mb-3">🎯 Próximos Pasos:</h3>
+          <ul className="space-y-2 text-sm">
+            <li>• Completar todos los campos obligatorios (*)</li>
+            <li>• Asegurar que la evaluación sume exactamente 100%</li>
+            <li>• Verificar que el tiempo total coincida con la duración del encabezado</li>
+            <li>• Revisar que cada etapa tenga actividades, tiempos, técnicas y materiales</li>
+            <li>• Exportar la carta descriptiva en formato JSON</li>
+            <li>• Generar los productos derivados (manuales, evaluaciones, contratos, listas)</li>
+          </ul>
+        </div>
+      </div>
 
-        function goToModule(moduleName) {
-            // Guardar datos antes de cambiar de módulo
-            saveData();
-            
-            // Redirigir al módulo correspondiente
-            window.location.href = `${moduleName}.html`;
-        }
+      {/* Footer */}
+      <div className="mt-8 text-center text-sm text-gray-600 pb-8">
+        <p className="font-semibold">Sistema de Carta Descriptiva EC0301 - Diseño Instruccional Presencial</p>
+        <p className="mt-2">Los datos se guardan automáticamente en tu navegador cada vez que presionas "Guardar"</p>
+        <p className="mt-1 text-xs text-gray-500">Desarrollado con estándares EC0301 para cursos de capacitación presencial</p>
+      </div>
+    </div>
+  );
+};
 
-        // Auto-guardado cada 30 segundos
-        setInterval(() => {
-            if (document.getElementById('nombre').value) {
-                saveData();
-            }
-        }, 30000);
-    </script>
-</body>
-</html>
+export default CartaDescriptivaEC0301;
